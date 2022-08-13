@@ -51,15 +51,47 @@ namespace sdakccapi.Controllers
                 FirstName = createUserDto.Name,
                 Lastname = createUserDto.Surname,
                 Email = createUserDto.EmailAddress,
-                UserName = createUserDto.UserName,
+                UserName = createUserDto.UserName.ToLower(),
                 
             };
+            
             var result = await _userManager.CreateAsync(newUser,createUserDto.Password);
             if (result.Succeeded)
             {
                 return Created("", new { Id = newUser.Id, Email = newUser.Email, FirstName= newUser.FirstName, LastName = newUser.Lastname });
             }
+            else if (result.Errors.FirstOrDefault()?.Code== "DuplicateUserName")
+            {
+                // username exists auto generate new              
+                newUser.UserName = await GenerateUserName(newUser.UserName);
+
+                //try again creating once
+                result = await _userManager.CreateAsync(newUser, createUserDto.Password);
+                if (result.Succeeded)
+                {
+                    return Created("", new { Id = newUser.Id, Email = newUser.Email, FirstName = newUser.FirstName, LastName = newUser.Lastname });
+                }
+
+            }
             return BadRequest(result.Errors);
+        }
+
+        private async Task<string> GenerateUserName(string oldUserName)
+        {
+            int random = 1;
+            string newUsername = oldUserName + random.ToString();
+           
+            while(await _userManager.FindByNameAsync(newUsername) != null)
+            {
+                random++;     
+                //prevent  infinte loop
+                if(random > 100)
+                {
+                    break;
+                }
+
+            }
+            return newUsername;
         }
 
         private string GenerateToken(AppUser user)
