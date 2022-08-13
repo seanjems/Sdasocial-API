@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using sdakccapi.Dtos;
+using sdakccapi.Dtos.PostsDto;
 using sdakccapi.Infrastructure;
 using sdakccapi.Models.Entities;
 
@@ -15,6 +17,7 @@ namespace sdakccapi.Controllers
     public class PostsController : ControllerBase
     {
         private readonly sdakccapiDbContext _context;
+        private readonly IWebHostEnvironment webHostEnvironment;
 
         public PostsController(sdakccapiDbContext context)
         {
@@ -84,16 +87,43 @@ namespace sdakccapi.Controllers
         // POST: api/Posts
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Posts>> PostPosts(Posts posts)
+        public async Task<ActionResult<Posts>> PostPosts(CreatePostDto posts)
         {
           if (_context.posts == null)
           {
               return Problem("Entity set 'sdakccapiDbContext.posts'  is null.");
           }
-            _context.posts.Add(posts);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            if(posts.Description==null && posts.ImageFile == null)
+            {
+                ModelState.AddModelError("", "PostPosts description and Image can't both be empty");
+                return BadRequest(ModelState);
+            }
+            var postsEntity = new Posts(posts);
+            
+            //save image if exists
+
+            if (posts.ImageFile != null)
+            {
+                var saveResult = await SaveFile(posts.ImageFile);
+                if (saveResult.ReturnCode == "200")
+                {
+                    postsEntity.ImageUrl = saveResult.Link;
+                }
+                else
+                {
+                    return BadRequest(saveResult.Message);
+                }
+
+            }
+
+            _context.posts.Add(postsEntity);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetPosts", new { id = posts.Id }, posts);
+           
+
+            return CreatedAtAction("GetPosts", new { id = postsEntity.Id }, posts);
         }
 
         // DELETE: api/Posts/5
@@ -120,5 +150,54 @@ namespace sdakccapi.Controllers
         {
             return (_context.posts?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+
+        //Save imageupload file
+        private async Task<ResultObject> SaveFile(IFormFile dto)
+        {
+            //handle image upload
+            string webRootPath = webHostEnvironment.WebRootPath;
+            string link = null;
+            var obj = new ResultObject();
+
+            var files = dto;
+            try
+            {
+                if (files.Length > 0)
+                {
+                    string uploadPath = Path.Combine(webRootPath, @"\images".TrimStart('\\')); // doesnt work if second path has a trailling slash
+                    string extension = Path.GetExtension(files.FileName);
+                    if (!(extension == ".jpg" || extension == ".png"))
+                    {
+                        throw new ApplicationException("The image file type must be jpg or png");
+
+                    }
+
+                    string fileNewName = Guid.NewGuid().ToString() + extension;
+
+                    using (var fileStream = new FileStream(Path.Combine(uploadPath, fileNewName), FileMode.Create))
+                    {
+                        await files.CopyToAsync(fileStream);
+                    }
+                    link = @"\images\" + fileNewName;
+                }
+
+                string msg = "Upload of Image Successful";
+                obj.ReturnCode = "200";
+                obj.ReturnDescription = msg;
+                obj.Response = "Success";
+                obj.Message = msg;
+
+            }
+            catch (Exception ex)
+            {
+                string msg = "An Error has occurred while attempting to Upload Image: Inner Exception: " + ex.Message;
+                obj.ReturnCode = "501";
+                obj.ReturnDescription = msg;
+                obj.Response = "Failed";
+                obj.Message = msg;
+            }
+            return obj;
+        }
+
     }
 }

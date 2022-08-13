@@ -1,4 +1,5 @@
-﻿using System;
+﻿using sdakccapi.Dtos.PostsDto;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -22,6 +23,13 @@ namespace sdakccapi.Models.Entities
         public Posts()
         {
             CreatedTime = DateTime.Now;
+        }
+        public Posts(CreatePostDto createPostDto)
+        {
+            CreatedTime = DateTime.Now;
+            Description = createPostDto.Description;
+            Id = createPostDto.Id;
+            UserId = createPostDto.UserId;
         }
     }
 }
