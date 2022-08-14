@@ -17,11 +17,12 @@ namespace sdakccapi.Controllers
     public class PostsController : ControllerBase
     {
         private readonly sdakccapiDbContext _context;
-        private readonly IWebHostEnvironment webHostEnvironment;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public PostsController(sdakccapiDbContext context)
+        public PostsController(sdakccapiDbContext context, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // GET: api/Posts
@@ -87,7 +88,7 @@ namespace sdakccapi.Controllers
         // POST: api/Posts
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Posts>> PostPosts(CreatePostDto posts)
+        public async Task<ActionResult<Posts>> PostPosts([FromForm]CreatePostDto posts)
         {
           if (_context.posts == null)
           {
@@ -95,18 +96,20 @@ namespace sdakccapi.Controllers
           }
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            if(posts.Description==null && posts.ImageFile == null)
+            var files = HttpContext.Request.Form.Files;
+
+            if (posts.Description==null && files.Count() == 0)
             {
-                ModelState.AddModelError("", "PostPosts description and Image can't both be empty");
+                ModelState.AddModelError("", "Post description and Image can't both be empty");
                 return BadRequest(ModelState);
             }
             var postsEntity = new Posts(posts);
-            
-            //save image if exists
 
-            if (posts.ImageFile != null)
+            //save image if exists
+            
+            if (files.Count() > 0)
             {
-                var saveResult = await SaveFile(posts.ImageFile);
+                var saveResult = await SaveFile(files[0]);
                 if (saveResult.ReturnCode == "200")
                 {
                     postsEntity.ImageUrl = saveResult.Link;
@@ -121,9 +124,9 @@ namespace sdakccapi.Controllers
             _context.posts.Add(postsEntity);
             await _context.SaveChangesAsync();
 
-           
+            var postsOut = new CreatedPostOutDto(postsEntity);
 
-            return CreatedAtAction("GetPosts", new { id = postsEntity.Id }, posts);
+            return CreatedAtAction("GetPosts", postsOut);
         }
 
         // DELETE: api/Posts/5
@@ -155,7 +158,7 @@ namespace sdakccapi.Controllers
         private async Task<ResultObject> SaveFile(IFormFile dto)
         {
             //handle image upload
-            string webRootPath = webHostEnvironment.WebRootPath;
+            string webRootPath = _webHostEnvironment.ContentRootPath;
             string link = null;
             var obj = new ResultObject();
 
@@ -164,7 +167,7 @@ namespace sdakccapi.Controllers
             {
                 if (files.Length > 0)
                 {
-                    string uploadPath = Path.Combine(webRootPath, @"\images".TrimStart('\\')); // doesnt work if second path has a trailling slash
+                    string uploadPath = Path.Combine(webRootPath, @"\media\images".TrimStart('\\')); // doesnt work if second path has a trailling slash
                     string extension = Path.GetExtension(files.FileName);
                     if (!(extension == ".jpg" || extension == ".png"))
                     {
@@ -178,7 +181,7 @@ namespace sdakccapi.Controllers
                     {
                         await files.CopyToAsync(fileStream);
                     }
-                    link = @"\images\" + fileNewName;
+                    link = @"\media\images\" + fileNewName;
                 }
 
                 string msg = "Upload of Image Successful";
@@ -186,6 +189,7 @@ namespace sdakccapi.Controllers
                 obj.ReturnDescription = msg;
                 obj.Response = "Success";
                 obj.Message = msg;
+                obj.Link = link;
 
             }
             catch (Exception ex)
