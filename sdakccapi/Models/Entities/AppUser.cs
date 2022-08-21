@@ -3,6 +3,7 @@
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
@@ -23,13 +24,21 @@ namespace sdakccapi.Models.Entities
         public int LocalChurch { get;  set; }
         public string? Contacts { get;  set; }
         public string? FavouriteVerse { get;  set; }
+        public string ProfilePicUrl { get; set; }
+        public string CoverPhotoUrl { get; set; }
+        [Required]
         public DateTime CreatedTime { get; set; }
-        public List<Follower>? Followers { get;  set; }
+        public DateTime DateModified { get; set; }
+
+        [NotMapped]
+        public virtual IEnumerable<AppUser> Followers { get;  set; }
+        [NotMapped]
+        public virtual IEnumerable<AppUser> Following { get;  set; }
 
 
         public AppUser()
         {
-            CreatedTime = DateTime.Now;
+            DateModified = DateTime.Now;
         }
 
 

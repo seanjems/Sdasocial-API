@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="11.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.8" />
@@ -22,8 +23,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="media\images\" />
-    <Folder Include="media\videos\" />
+    <Folder Include="wwwroot\media\videos\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\media\images\1890ef7f-789b-496f-bfef-b1638f92d503.png" />
+    <None Include="wwwroot\media\images\22c4729c-2709-4e43-b513-bec403e5bdcd.png" />
+    <None Include="wwwroot\media\images\56bcc7ee-2ed7-4739-ac3f-6992917e9f4a.png" />
+    <None Include="wwwroot\media\images\60e865b7-6d2a-44c4-81cb-5816a1e3bbf8.png" />
+    <None Include="wwwroot\media\images\a5e64948-f904-4538-92d3-eda848b2066c.png" />
+    <None Include="wwwroot\media\images\b97be3db-1b82-479c-a036-dc5c86287bed.png" />
+    <None Include="wwwroot\media\images\d56da739-a9d0-4df3-be3c-34ea7757073d.png" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace sdakccapi.Dtos
+namespace sdakccapi.Dtos.Users
 {
     public class CreateUserDto
     {

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using sdakccapi.Infrastructure;
 
@@ -11,9 +12,10 @@ using sdakccapi.Infrastructure;
 namespace sdakccapi.Migrations
 {
     [DbContext(typeof(sdakccapiDbContext))]
-    partial class sdakccapiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220821080028_updatedFollowerFolloweeRL")]
+    partial class updatedFollowerFolloweeRL
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -255,48 +257,18 @@ namespace sdakccapi.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("sdakccapi.Models.Entities.Comments", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<long>("PostId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("CommentDesc")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CommentImageUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("ParentCommentId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("UserId", "PostId");
-
-                    b.ToTable("comments");
-                });
-
             modelBuilder.Entity("sdakccapi.Models.Entities.Follower", b =>
                 {
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("FollowingId")
+                    b.Property<string>("FollowedById")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("CreatedTime")
                         .HasColumnType("datetime2");
 
-                    b.HasKey("UserId", "FollowingId");
+                    b.HasKey("UserId", "FollowedById");
 
                     b.ToTable("followers");
                 });

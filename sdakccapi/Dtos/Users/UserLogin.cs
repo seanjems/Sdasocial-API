@@ -1,4 +1,4 @@
-﻿namespace sdakccapi.Dtos
+﻿namespace sdakccapi.Dtos.Users
 {
     public class UserLogin
     {

@@ -66,10 +66,6 @@ builder.Services.AddMvc();
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 
-
-
-
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -79,6 +75,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseRouting();
+app.UseStaticFiles();
 app.UseCors("localhost");
 app.UseHttpsRedirection();
 

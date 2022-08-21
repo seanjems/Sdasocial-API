@@ -17,19 +17,30 @@ namespace sdakccapi.Models.Entities
         public string Description { get; set; }
         public int? PostType { get; set; }
         public string? ImageUrl { get; set; }
+        [Required]
         public DateTime CreatedTime { get; set; }
+        public DateTime DateModified { get; set; }
         [ForeignKey("UserId")]
         public AppUser User { get; set; }
         public Posts()
         {
-            CreatedTime = DateTime.Now;
+            DateModified = DateTime.Now;
         }
         public Posts(CreatePostDto createPostDto)
         {
-            CreatedTime = DateTime.Now;
+            DateModified = DateTime.Now;
             Description = createPostDto.Description;
             Id = createPostDto.Id;
             UserId = createPostDto.UserId;
+        }
+        public Posts(CreatedPostOutDto createPostDto)
+        {
+        
+            Id = createPostDto.Id;
+            DateModified = DateTime.Now;
+            Description = createPostDto.Desc;
+            Id = createPostDto.Id;
+            UserId = createPostDto.CreatorId;
         }
     }
 }

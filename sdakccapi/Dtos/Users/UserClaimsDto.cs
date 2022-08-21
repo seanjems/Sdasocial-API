@@ -1,6 +1,6 @@
 ﻿using sdakccapi.Models.Entities;
 
-namespace sdakccapi.Dtos
+namespace sdakccapi.Dtos.Users
 {
     public class UserClaimsDto
     {
@@ -25,5 +25,5 @@ namespace sdakccapi.Dtos
         }
 
     }
-    
+
 }

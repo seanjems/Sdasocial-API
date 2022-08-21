@@ -1,9 +1,8 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace sdakccapi.Dtos
+namespace sdakccapi.Dtos.Users
 {
     public class ResultObject
     {
