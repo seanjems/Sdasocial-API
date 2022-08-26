@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using sdakccapi.Infrastructure;
 
@@ -11,9 +12,10 @@ using sdakccapi.Infrastructure;
 namespace sdakccapi.Migrations
 {
     [DbContext(typeof(sdakccapiDbContext))]
-    partial class sdakccapiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220825163652_addingLikesToPosts")]
+    partial class addingLikesToPosts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -29,21 +29,38 @@ namespace sdakccapi.Controllers
 
         // GET: api/Posts
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CreatedPostOutDto>>> Getposts(int page =1)
+        public async Task<ActionResult<IEnumerable<CreatedPostOutDto>>> Getposts(int page =1, string? userProfileId=null)
         {
             if (_context.posts == null)
             {
                 return NotFound();
             }
             int numberPerpage = 15;
-            var posts = await _context.posts
-                .Include(nameof(Like))
-                .Include(nameof(User))
-                .OrderByDescending(x=>x.CreatedTime)
-                .Skip((page-1)*numberPerpage)
+            //if on timeline
+            List<Posts> posts;
+            //ifon userprofile
+            if (userProfileId ==null)
+            {
+              posts = await _context.posts
+               .Include(nameof(PostLikes))
+               .Include(nameof(User))
+               .OrderByDescending(x => x.CreatedTime)
+               .Skip((page - 1) * numberPerpage)
+               .Take(numberPerpage)
+               .ToListAsync();
+            }
+            else
+            {
+               posts = await _context.posts
+                .Include(nameof(PostLikes))
+                .Include(nameof(User))                
+                .Where(x=>x.UserId==userProfileId)
+                .OrderByDescending(x => x.CreatedTime)
+                .Skip((page - 1) * numberPerpage)
                 .Take(numberPerpage)
                 .ToListAsync();
-
+            }
+            
 
             var baseLink = $"{Request.Scheme}://{Request.Host.Value}/"; 
             var list = new List<CreatedPostOutDto>();
@@ -57,7 +74,9 @@ namespace sdakccapi.Controllers
 
             return list;
         }
+        
 
+   
         // GET: api/Posts/5
         [HttpGet("{id}")]
         public async Task<ActionResult<CreatedPostOutDto>> GetPost(long id)
