@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -97,16 +98,18 @@ namespace sdakccapi.Controllers
             return null;
         }
 
-        [AllowAnonymous]
+        [Authorize(AuthenticationSchemes =
+        JwtBearerDefaults.AuthenticationScheme)]
         [HttpPut]
-        public async Task<IActionResult> UpdateUser([FromBody] UpdateUserprofile updateUserprofile)
+        public async Task<IActionResult> UpdateUser([FromForm] UpdateUserprofile updateUserprofile)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var files = HttpContext.Request.Form.Files;
 
-
-            var objFromDb = await _userManager.FindByIdAsync(updateUserprofile.UserId); //TODO: get id from httpcontext
+            //read user from user context
+            var currentUserId = GetCurrentUser(HttpContext)?.UserId;
+            var objFromDb = await _userManager.FindByIdAsync(currentUserId); //TODO: get id from httpcontext
 
             if (objFromDb == null) return NotFound();
 
@@ -154,7 +157,7 @@ namespace sdakccapi.Controllers
             objFromDb.Family = updateUserprofile.Family;
             objFromDb.Profession = updateUserprofile.Profession;
             objFromDb.Aboutme = updateUserprofile.Aboutme;
-            objFromDb.LocalChurch = updateUserprofile.LocalChurch;
+            objFromDb.LocalChurch = "SDA Kampala Central";//updateUserprofile.LocalChurch;
             objFromDb.Contacts = updateUserprofile.Contacts;
             objFromDb.FavouriteVerse = updateUserprofile.FavouriteVerse;
 
