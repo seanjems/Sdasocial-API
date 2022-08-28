@@ -62,8 +62,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
         };
     });
-builder.Services.AddMvc();
-builder.Services.AddControllers();
+builder.Services.AddMvc().AddControllersAsServices();
+builder.Services.AddControllers().AddControllersAsServices();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();

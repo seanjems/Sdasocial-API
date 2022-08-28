@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using sdakccapi.Dtos.Users;
 using sdakccapi.Models.Entities;
 using System.IdentityModel.Tokens.Jwt;
@@ -78,6 +79,22 @@ namespace sdakccapi.Controllers
 
             }
             return BadRequest(result.Errors);
+        }
+        [Authorize]
+        [HttpGet]
+        public UserClaimsDto GetCurrentUser(HttpContext httpContext)
+        {
+            var identity = httpContext?.User?.Identity as ClaimsIdentity;
+
+            if (identity != null)
+            {
+                var userClaims = identity.Claims;
+                var userDetails = userClaims.FirstOrDefault(x => x.Type == "user")?.Value;
+                var userClaimsDto = JsonConvert.DeserializeObject<UserClaimsDto>(userDetails);
+                return userClaimsDto;
+                
+            }
+            return null;
         }
 
         [AllowAnonymous]

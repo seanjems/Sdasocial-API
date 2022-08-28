@@ -23,7 +23,7 @@ namespace sdakccapi.Dtos.PostsDto
         public int Likes { get; set; }
         public bool Liked { get; set; }
         [ForeignKey("CreatorId")] public UserClaimsDto? CreatorUSer { get; set; }
-        public PostLikes? PostLikes { get; set; }
+        public List<PostLikes>? PostLikes { get; set; } = new List<PostLikes>();
 
 
         public CreatedPostOutDto()

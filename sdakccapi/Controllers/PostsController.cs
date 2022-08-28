@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,15 +18,19 @@ namespace sdakccapi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes =
+    JwtBearerDefaults.AuthenticationScheme)]
     public class PostsController : ControllerBase
     {
         private readonly sdakccapiDbContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly AuthorizationController _authorizationController;
 
-        public PostsController(sdakccapiDbContext context, IWebHostEnvironment webHostEnvironment)
+        public PostsController(sdakccapiDbContext context, IWebHostEnvironment webHostEnvironment, AuthorizationController authorizationController)
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
+            _authorizationController = authorizationController;
         }
 
         // GET: api/Posts
@@ -39,11 +45,11 @@ namespace sdakccapi.Controllers
             //if on timeline
             List<Posts> posts;
             //ifon userprofile
-            if (userProfileId ==null)
+            if (string.IsNullOrEmpty(userProfileId) || userProfileId=="undefined"||userProfileId=="null")
             {
               posts = await _context.posts
-               .Include(nameof(PostLikes))
-               .Include(nameof(User))
+               //.Include("PostLikesList")
+               //.Include(nameof(User))
                .OrderByDescending(x => x.CreatedTime)
                .Skip((page - 1) * numberPerpage)
                .Take(numberPerpage)
@@ -52,8 +58,8 @@ namespace sdakccapi.Controllers
             else
             {
                posts = await _context.posts
-                .Include(nameof(PostLikes))
-                .Include(nameof(User))                
+                //.Include("PostLikesList")
+                //.Include(nameof(User))                
                 .Where(x=>x.UserId==userProfileId)
                 .OrderByDescending(x => x.CreatedTime)
                 .Skip((page - 1) * numberPerpage)
@@ -66,9 +72,9 @@ namespace sdakccapi.Controllers
             var list = new List<CreatedPostOutDto>();
             foreach (var post in posts)
             {
-                var postOut = new CreatedPostOutDto(post);
-                postOut.CreatorUSer = new UserClaimsDto(post.User);
-                postOut.Img = baseLink + post.ImageUrl;
+                var postOut = PostWithDetails(post);
+                //postOut.CreatorUSer = new UserClaimsDto(post.User);
+                //postOut.Img = baseLink + post.ImageUrl;
                 list.Add(postOut);
             }
 
@@ -79,6 +85,7 @@ namespace sdakccapi.Controllers
    
         // GET: api/Posts/5
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<CreatedPostOutDto>> GetPost(long id)
         {
             if (_context.posts == null)
@@ -88,7 +95,7 @@ namespace sdakccapi.Controllers
             //var posts = await _context.posts.FindAsync(id);
 
             var post = await _context.posts
-             .Include(nameof(Like))
+             .Include("PostLikesList")
              .Include(nameof(User))             
              .FirstOrDefaultAsync(x=>x.Id==id);
 
@@ -97,11 +104,51 @@ namespace sdakccapi.Controllers
                 return NotFound();
             }
 
-            var baseLink = $"{Request.Scheme}://{Request.Host.Value}/";
+            var baseLink = Request != null ? $"{Request?.Scheme}://{Request?.Host.Value}/" : null ;
             var list = new List<CreatedPostOutDto>();
 
            
             var postOut = new CreatedPostOutDto(post);
+            var postsLikes = _context.likes.Where(x => x.PostId == post.Id).ToList();
+            foreach (var like in postsLikes)
+            {
+                var postLiker = _context.Users.Find(like.UserId);
+                var postLikerName = new PostLikes()
+                {
+                    UserId = like.UserId,
+                    FirstName = postLiker.FirstName,
+                    LastName = postLiker.Lastname
+                };
+                postOut.PostLikes.Add(postLikerName);
+            }
+            var currentUser = _authorizationController.GetCurrentUser(HttpContext);
+            postOut.Likes = postsLikes.Count();
+            postOut.Liked = postsLikes.Where(x => x.UserId == currentUser?.UserId).Count() > 0;
+            postOut.CreatorUSer = new UserClaimsDto(post.User);
+            postOut.Img = baseLink + post.ImageUrl;
+
+            return postOut;
+        }
+
+        private CreatedPostOutDto PostWithDetails(Posts post)
+        {
+            var baseLink = $"{Request.Scheme}://{Request.Host.Value}/";
+            var postOut = new CreatedPostOutDto(post);
+            var postsLikes = _context.likes.Where(x => x.PostId == post.Id).ToList();
+            foreach (var like in postsLikes)
+            {
+                var postLiker = _context.Users.Find(like.UserId);
+                var postLikerName = new PostLikes()
+                {
+                    UserId = like.UserId,
+                    FirstName = postLiker.FirstName,
+                    LastName = postLiker.Lastname
+                };
+                postOut.PostLikes.Add(postLikerName);
+            }
+            var currentUser = _authorizationController.GetCurrentUser(HttpContext);
+            postOut.Likes = postsLikes.Count();
+            postOut.Liked = postsLikes.Where(x => x.UserId == currentUser?.UserId).Count() > 0;
             postOut.CreatorUSer = new UserClaimsDto(post.User);
             postOut.Img = baseLink + post.ImageUrl;
 
@@ -170,9 +217,12 @@ namespace sdakccapi.Controllers
                 ModelState.AddModelError("", "Post description and Image can't both be empty");
                 return BadRequest(ModelState);
             }
+            var currentUser = _authorizationController.GetCurrentUser(HttpContext);
             var postsEntity = new Posts(posts);
-
+            postsEntity.UserId = currentUser?.UserId;
             //save image if exists
+
+            //TODO: create a transactional scope for this
 
             if (files.Count() > 0)
             {
@@ -188,6 +238,7 @@ namespace sdakccapi.Controllers
 
             }
 
+         
             _context.posts.Add(postsEntity);
             await _context.SaveChangesAsync();
 
@@ -198,9 +249,9 @@ namespace sdakccapi.Controllers
             postsOut.Img = baseLink + postsOut.Img;
 
             //TODO: GET user details from claims
+
             
-                var currentUser = _context.Users.Find(postsOut.CreatorId);
-            postsOut.Name = $"{currentUser.FirstName} {currentUser.Lastname}";
+            postsOut.Name = $"{currentUser.FirstName} {currentUser.LastName}";
             return CreatedAtAction("GetPosts", postsOut);
         }
 

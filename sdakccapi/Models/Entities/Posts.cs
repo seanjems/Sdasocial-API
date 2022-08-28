@@ -22,7 +22,7 @@ namespace sdakccapi.Models.Entities
         public DateTime DateModified { get; set; }
         [ForeignKey("UserId")]
         public AppUser User { get; set; }
-        public List<Like> PostLikes { get; set; }
+        public List<Like> PostLikesList { get; set; }
         public Posts()
         {
             DateModified = DateTime.Now;

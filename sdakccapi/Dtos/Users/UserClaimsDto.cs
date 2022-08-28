@@ -17,11 +17,11 @@ namespace sdakccapi.Dtos.Users
         }
         public UserClaimsDto(AppUser user)
         {
-            Email = user.Email;
-            FirstName = user.FirstName;
-            LastName = user.Lastname;
-            UserId = user.Id;
-            FullName = $"{user.FirstName} {user.Lastname}";
+            Email = user?.Email;
+            FirstName = user?.FirstName;
+            LastName = user?.Lastname;
+            UserId = user?.Id;
+            FullName = $"{user?.FirstName} {user?.Lastname}";
         }
 
     }
