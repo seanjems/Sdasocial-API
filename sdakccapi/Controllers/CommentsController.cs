@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using sdakccapi.Dtos;
 using sdakccapi.Dtos.Comments;
-using sdakccapi.Dtos.Users;
 using sdakccapi.Infrastructure;
 using sdakccapi.Models.Entities;
 

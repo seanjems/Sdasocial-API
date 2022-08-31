@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace sdakccapi.Dtos.Users
+namespace sdakccapi.Dtos
 {
     public class ResultObject
     {

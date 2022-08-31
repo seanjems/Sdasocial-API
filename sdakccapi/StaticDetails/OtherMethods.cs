@@ -1,4 +1,4 @@
-﻿using sdakccapi.Dtos.Users;
+﻿using sdakccapi.Dtos;
 
 namespace sdakccapi.StaticDetails
 {

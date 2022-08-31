@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using sdakccapi.Dtos;
 using sdakccapi.Dtos.Users;
+using sdakccapi.Infrastructure;
 using sdakccapi.Models.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -22,14 +24,16 @@ namespace sdakccapi.Controllers
         private readonly SignInManager<AppUser> _signInManager;
         private readonly UserManager<AppUser> _userManager;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly sdakccapiDbContext _context;
 
 
-        public AuthorizationController(IConfiguration config, SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, IWebHostEnvironment webHostEnvironment)
+        public AuthorizationController(IConfiguration config,sdakccapiDbContext context, SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, IWebHostEnvironment webHostEnvironment)
         {
             _config = config;
             _signInManager = signInManager;
             _userManager = userManager;
             _webHostEnvironment = webHostEnvironment;
+            _context = context;
         }
 
         [AllowAnonymous]
@@ -139,7 +143,7 @@ namespace sdakccapi.Controllers
                     var saveResult = await SaveFile(cover.FirstOrDefault());
                     if (saveResult.ReturnCode == "200")
                     {
-                        objFromDb.ProfilePicUrl = saveResult.Link;
+                        objFromDb.CoverPhotoUrl = saveResult.Link;
                     }
                     else
                     {
@@ -168,6 +172,37 @@ namespace sdakccapi.Controllers
             }
             return BadRequest(result.Errors);
 
+        }
+        // GET: api/Posts/5
+        [HttpGet("{id}")]
+        [Authorize(AuthenticationSchemes =
+        JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> GetUserProfile(string id)
+        {
+
+            var user = await _userManager.FindByIdAsync(id);
+             
+
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            var baseLink = Request != null ? $"{Request?.Scheme}://{Request?.Host.Value}/" : null;
+            //var list = new List<CreatedPostOutDto>();
+
+            var userProfile = new UpdateUserprofileOutDto(user);
+            
+            var followers = _context.followers.Where(x => x.FollowingId == id).ToList();
+            var following = _context.followers.Where(x => x.UserId == id).ToList();
+
+            userProfile.Followers = followers.Count();
+            userProfile.Following = following.Count();
+
+            userProfile.ProfilePicUrl = !string.IsNullOrEmpty(user.ProfilePicUrl) ? baseLink + user.ProfilePicUrl: "https://www.seekpng.com/png/detail/143-1435868_headshot-silhouette-person-placeholder.png";
+            userProfile.CoverPicUrl = !string.IsNullOrEmpty(user.CoverPhotoUrl)? baseLink + user.CoverPhotoUrl: "https://via.placeholder.com/728x90.png?text=No+Cover+Image";
+            
+            return Ok(userProfile);
         }
 
         private async Task<string> GenerateUserName(string oldUserName)
