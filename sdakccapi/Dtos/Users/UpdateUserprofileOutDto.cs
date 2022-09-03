@@ -22,6 +22,7 @@ namespace sdakccapi.Dtos.Users
         public string ProfilePicUrl { get; set; }
         public string CoverPicUrl { get; set; }
         public string UserName { get; set; }
+        public int TotalPosts { get; set; }
 
         public UpdateUserprofileOutDto()
         {
@@ -41,6 +42,8 @@ namespace sdakccapi.Dtos.Users
             FirstName = user.FirstName;
             Lastname = user.Lastname;
             UserName = user.UserName;
+            Profession = user.Profession;
+            Relationship = user.Relationship;
         }
     }
 }

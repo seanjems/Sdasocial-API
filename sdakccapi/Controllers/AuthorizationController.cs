@@ -195,6 +195,7 @@ namespace sdakccapi.Controllers
             
             var followers = _context.followers.Where(x => x.FollowingId == id).ToList();
             var following = _context.followers.Where(x => x.UserId == id).ToList();
+            userProfile.TotalPosts = _context.posts.Where(x=>x.UserId == id).Count();
 
             userProfile.Followers = followers.Count();
             userProfile.Following = following.Count();
