@@ -151,6 +151,8 @@ namespace sdakccapi.Controllers
             postOut.Liked = postsLikes.Where(x => x.UserId == currentUser?.UserId).Count() > 0;
             postOut.CreatorUSer = new UserClaimsDto(post.User);
             postOut.Img = baseLink + post.ImageUrl;
+            postOut.Comments = _context.comments.Count(x=>x.PostId == post.Id);
+            postOut.Shares = 0;//_context.comments.Count(x=>x.PostId == post.Id);
 
             return postOut;
         }

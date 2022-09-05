@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using sdakccapi.Dtos;
@@ -12,44 +15,133 @@ using sdakccapi.Models.Entities;
 
 namespace sdakccapi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes =
+    JwtBearerDefaults.AuthenticationScheme)]
     public class CommentsController : ControllerBase
     {
-        private readonly sdakccapiDbContext _context; 
+        private readonly sdakccapiDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly AuthorizationController _authorizationController;
 
-
-        public CommentsController(sdakccapiDbContext context, IWebHostEnvironment webHostEnvironment)
+        public CommentsController(sdakccapiDbContext context, IWebHostEnvironment webHostEnvironment, UserManager<AppUser> userManager, AuthorizationController authorizationController)
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
+            _userManager = userManager;
+            _authorizationController = authorizationController;
         }
 
         // GET: api/Comments/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Comments>> GetComments(long id)
+        public async Task<ActionResult<CommentOutDto>> GetComments(long id)
         {
-          if (_context.comments == null)
-          {
-              return NotFound();
-          }
-            var comments = await _context.comments.FindAsync(id);
-
-            if (comments == null)
-            {
-                return NotFound();
-            }
-
-            return comments;
+            return Ok(singleCommentOutPut(id));
         }
 
+        private async Task<CommentOutDto> singleCommentOutPut(long id)
+        {
+            //this method is currently deperecated
+
+            var baseLink = $"{Request.Scheme}://{Request.Host.Value}/";
+            int numberPerpage = 15;
+            var allCommentsOnpost = _context.comments.Include(x => x.User).Where(x => x.Id == id)
+                .OrderByDescending(x => x.CreatedTime)
+                .ToList();
+            var commentsList = new List<CommentOutDto>();
+            foreach (var comment in allCommentsOnpost)
+            {
+
+                var commentOut = new CommentOutDto(comment);
+                commentOut.CommentImageUrl = !string.IsNullOrEmpty(commentOut.CommentImageUrl) ? baseLink + commentOut.CommentImageUrl : null;
+                commentOut.avatarUrl = !string.IsNullOrEmpty(commentOut.avatarUrl) ? baseLink + commentOut.avatarUrl : "https://www.seekpng.com/png/detail/143-1435868_headshot-silhouette-person-placeholder.png";
+
+                //commbine comment image  and text to make dangerously set html
+                if (!string.IsNullOrEmpty(commentOut.CommentImageUrl))
+                {
+
+                    commentOut.Text = $"<img src=\"{commentOut.CommentImageUrl}\" alt=\"\" style=\"height: auto;width: auto\"/>" +
+                        $"<p></p>" +
+                        $"<p>{commentOut.Text}</p>";
+                }
+
+                foreach (var comment2 in allCommentsOnpost.Where(x => x.ParentCommentId == commentOut.ComId))
+                {
+                    var commentOut2 = new CommentOutDto(comment2);
+                    commentOut2.CommentImageUrl = !string.IsNullOrEmpty(commentOut2.CommentImageUrl) ? commentOut2.CommentImageUrl : null;
+
+
+                    if (!string.IsNullOrEmpty(commentOut2.CommentImageUrl))
+                    {
+
+                        commentOut.Text = $"<img src=\"{commentOut2.CommentImageUrl}\" alt=\"\" style=\"height: auto;width: auto\"/>" +
+                            $"<p></p>" +
+                            $"<p>{commentOut2.Text}</p>";
+                    }
+                    commentOut.Replies.Add(commentOut2);
+                }
+                commentsList.Add(commentOut);
+            }
+            return commentsList[0];
+        }
+        // GET: api/Comments
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<List<CommentOutDto>> GetCommentsPerPost(long PostId, int page = 1)
+        {
+            var baseLink = $"{Request.Scheme}://{Request.Host.Value}/";
+            int numberPerpage = 15;
+            var allCommentsOnpost = _context.comments.Include(x => x.User).Where(x => x.PostId == PostId)
+                .OrderByDescending(x => x.CreatedTime)
+                .Skip((page - 1) * numberPerpage)
+                .Take(numberPerpage)
+                .ToList();
+            var commentsList = new List<CommentOutDto>();
+            foreach (var comment in allCommentsOnpost.Where(x => x.ParentCommentId == null || x.ParentCommentId == 0))
+            {
+
+                var commentOut = new CommentOutDto(comment);
+                commentOut.CommentImageUrl = !string.IsNullOrEmpty(commentOut.CommentImageUrl) ? baseLink + commentOut.CommentImageUrl : null;
+                commentOut.avatarUrl = !string.IsNullOrEmpty(commentOut.avatarUrl) ? baseLink + commentOut.avatarUrl : null;
+                // commentOut.Text = $"<span style=\"word-wrap: break-word;\"/>{commentOut.Text} </span>";
+                //commbine comment image  and text to make dangerously set html
+                if (!string.IsNullOrEmpty(commentOut.CommentImageUrl))
+                {
+
+                    commentOut.Text = $"<img src=\"{commentOut.CommentImageUrl}\" alt=\"\" style=\"height: auto;width: auto\"/>" +
+                        $"<p></p>" +
+                        $"<p>{commentOut.Text}</p>";
+                }
+
+                foreach (var comment2 in allCommentsOnpost.Where(x => x.ParentCommentId == commentOut.ComId))
+                {
+
+                    var commentOut2 = new CommentOutDto(comment2);
+                    commentOut2.CommentImageUrl = !string.IsNullOrEmpty(commentOut2.CommentImageUrl) ? baseLink + commentOut2.CommentImageUrl : null;
+                    commentOut2.avatarUrl = !string.IsNullOrEmpty(commentOut2.avatarUrl) ? baseLink + commentOut2.avatarUrl : null;
+
+                    if (!string.IsNullOrEmpty(commentOut2.CommentImageUrl))
+                    {
+
+                        commentOut.Text = $"<img src=\"{commentOut2.CommentImageUrl}\" alt=\"\" style=\"height: auto;width: auto\"/>" +
+                            $"<p></p>" +
+                            $"<p>{commentOut2.Text}</p>";
+                    }
+                    commentOut.Replies.Add(commentOut2);
+                }
+                commentsList.Add(commentOut);
+            }
+
+            return commentsList;
+        }
         // PUT: api/Comments/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutComments([FromForm]CreateCommentDto createCommentDto)
+        [HttpPut]
+        public async Task<IActionResult> PutComments([FromForm] UpdateCommentDto createCommentDto)
         {
-            if (createCommentDto.Id ==null)
+            if (createCommentDto.Id == null)
             {
                 return BadRequest("No comment Id specified");
             }
@@ -66,6 +158,8 @@ namespace sdakccapi.Controllers
 
             if (commentFromDb == null) return NotFound();
 
+
+            //TODO; DELETE OLD IMAGE AND UPLOAD NEW IMAGE
             commentFromDb.CommentDesc = commentFromDb.CommentDesc;
 
             _context.Entry(commentFromDb).State = EntityState.Modified;
@@ -76,27 +170,29 @@ namespace sdakccapi.Controllers
             }
             catch (DbUpdateConcurrencyException ex)
             {
-                
-                    return BadRequest();
-            
+
+                return BadRequest();
+
             }
 
             return NoContent();
 
-            
+
         }
 
         // POST: api/Comments
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Comments>> PostComments([FromForm]CreateCommentDto commentsInput)
+        public async Task<ActionResult<List<CommentOutDto>>> PostComments([FromForm] CreateCommentDto commentsInput)
         {
-          if (_context.comments == null)
-          {
-              return Problem("Entity set 'sdakccapiDbContext.comments'  is null.");
-          }
+            if (_context.comments == null)
+            {
+                return Problem("Entity set 'sdakccapiDbContext.comments'  is null.");
+            }
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var files = HttpContext.Request.Form.Files;
+            var currentUser = _authorizationController.GetCurrentUser(HttpContext);
+            if (currentUser == null) return Unauthorized();
 
             if ((string.IsNullOrEmpty(commentsInput.CommentDesc) || string.IsNullOrWhiteSpace(commentsInput.CommentDesc)) && files.Count() == 0)
             {
@@ -106,6 +202,7 @@ namespace sdakccapi.Controllers
 
             //save image if exists
             var comments = new Comments(commentsInput);
+
 
             if (files.Count() > 0)
             {
@@ -120,10 +217,14 @@ namespace sdakccapi.Controllers
                 }
 
             }
+            comments.CreatedTime = DateTime.Now;
+            comments.UserId = currentUser.UserId;
+            comments.Id = 0;
+            var create = _context.comments.Add(comments);
+            await _context.SaveChangesAsync();
 
-           
 
-            return CreatedAtAction("GetComments", new { id = comments.UserId }, comments);
+            return Ok(GetCommentsPerPost(comments.PostId));
         }
 
         // DELETE: api/Comments/5

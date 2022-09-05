@@ -12,8 +12,8 @@ using sdakccapi.Infrastructure;
 namespace sdakccapi.Migrations
 {
     [DbContext(typeof(sdakccapiDbContext))]
-    [Migration("20220811031903_addIdentityUsers")]
-    partial class addIdentityUsers
+    [Migration("20220904044823_AllMigrationsCombinedUpToComentsUpdate")]
+    partial class AllMigrationsCombinedUpToComentsUpdate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -178,7 +178,13 @@ namespace sdakccapi.Migrations
                     b.Property<string>("Contacts")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("CoverPhotoUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateModified")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
@@ -188,14 +194,22 @@ namespace sdakccapi.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<int>("Family")
-                        .HasColumnType("int");
+                    b.Property<string>("Family")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FavouriteVerse")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("LocalChurch")
-                        .HasColumnType("int");
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Lastname")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LocalChurch")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -220,11 +234,14 @@ namespace sdakccapi.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<int>("Profession")
-                        .HasColumnType("int");
+                    b.Property<string>("Profession")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Relationship")
-                        .HasColumnType("int");
+                    b.Property<string>("ProfilePicUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Relationship")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -249,23 +266,59 @@ namespace sdakccapi.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("sdakccapi.Models.Entities.Comments", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<string>("CommentDesc")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CommentImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("ParentCommentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("PostId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("comments");
+                });
+
             modelBuilder.Entity("sdakccapi.Models.Entities.Follower", b =>
                 {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<Guid>("FollowerId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AppUserId")
+                    b.Property<string>("FollowingId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("CreatedTime")
                         .HasColumnType("datetime2");
 
-                    b.HasKey("UserId", "FollowerId");
+                    b.Property<DateTime>("DateModified")
+                        .HasColumnType("datetime2");
 
-                    b.HasIndex("AppUserId");
+                    b.HasKey("UserId", "FollowingId");
 
                     b.ToTable("followers");
                 });
@@ -281,10 +334,18 @@ namespace sdakccapi.Migrations
                     b.Property<DateTime>("CreatedTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime>("DateModified")
+                        .HasColumnType("datetime2");
+
                     b.Property<long>("PostType")
                         .HasColumnType("bigint");
 
+                    b.Property<long?>("PostsId")
+                        .HasColumnType("bigint");
+
                     b.HasKey("UserId", "PostId");
+
+                    b.HasIndex("PostsId");
 
                     b.ToTable("likes");
                 });
@@ -298,6 +359,9 @@ namespace sdakccapi.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateModified")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
@@ -372,22 +436,22 @@ namespace sdakccapi.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("sdakccapi.Models.Entities.Follower", b =>
+            modelBuilder.Entity("sdakccapi.Models.Entities.Comments", b =>
                 {
-                    b.HasOne("sdakccapi.Models.Entities.AppUser", null)
-                        .WithMany("Followers")
-                        .HasForeignKey("AppUserId");
-                });
-
-            modelBuilder.Entity("sdakccapi.Models.Entities.Like", b =>
-                {
-                    b.HasOne("sdakccapi.Models.Entities.AppUser", "Users")
+                    b.HasOne("sdakccapi.Models.Entities.AppUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Users");
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("sdakccapi.Models.Entities.Like", b =>
+                {
+                    b.HasOne("sdakccapi.Models.Entities.Posts", null)
+                        .WithMany("PostLikesList")
+                        .HasForeignKey("PostsId");
                 });
 
             modelBuilder.Entity("sdakccapi.Models.Entities.Posts", b =>
@@ -401,9 +465,9 @@ namespace sdakccapi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("sdakccapi.Models.Entities.AppUser", b =>
+            modelBuilder.Entity("sdakccapi.Models.Entities.Posts", b =>
                 {
-                    b.Navigation("Followers");
+                    b.Navigation("PostLikesList");
                 });
 #pragma warning restore 612, 618
         }

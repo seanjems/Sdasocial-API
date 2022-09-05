@@ -95,6 +95,7 @@ namespace sdakccapi.Controllers
             {
                 var userClaims = identity.Claims;
                 var userDetails = userClaims.FirstOrDefault(x => x.Type == "user")?.Value;
+                if (userDetails == null) return null;
                 var userClaimsDto = JsonConvert.DeserializeObject<UserClaimsDto>(userDetails);
                 return userClaimsDto;
                 

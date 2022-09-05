@@ -19,13 +19,13 @@ namespace sdakccapi.Models.Entities
         public long PostId { get; set; }
         [Required]
         public string UserId { get; set; }
-        [Required]
         public DateTime CreatedTime { get; set; }
         public DateTime DateModified { get; set; }
         [Required]
-        public string CommentDesc { get; set; }
+        public string? CommentDesc { get; set; }
         public long? ParentCommentId { get; set; }
-        public string CommentImageUrl { get; set; }
+        public string? CommentImageUrl { get; set; }
+        [ForeignKey("UserId")]public AppUser User { get; set; }
 
 
         public Comments()
@@ -39,7 +39,7 @@ namespace sdakccapi.Models.Entities
             ParentCommentId = createCommentDto.ParentCommentId;
             CommentImageUrl = createCommentDto.CommentImageUrl;
             PostId = createCommentDto.PostId;
-            Id = (long)createCommentDto.Id;
+            Id = (long)(createCommentDto?.Id??0);
             UserId = createCommentDto.UserId;
         }
     }

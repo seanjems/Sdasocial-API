@@ -11,6 +11,7 @@ namespace sdakccapi.Dtos.PostsDto
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string UserName { get; set; }
+        public string ProfilePicUrl { get; set; }
 
         public PostLikes(AppUser user)
         {
@@ -18,6 +19,8 @@ namespace sdakccapi.Dtos.PostsDto
             FirstName = user.FirstName;
             LastName = user.Lastname;
             UserName = user.UserName;
+            ProfilePicUrl = user.ProfilePicUrl;
+            
         }
         public PostLikes()
         {

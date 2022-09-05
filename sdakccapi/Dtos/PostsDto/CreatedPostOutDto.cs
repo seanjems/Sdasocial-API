@@ -21,6 +21,8 @@ namespace sdakccapi.Dtos.PostsDto
         public string? Name { get; set; }
         public string? Img { get; set; }
         public int Likes { get; set; }
+        public int Comments { get; set; }
+        public int Shares { get; set; }
         public bool Liked { get; set; }
         [ForeignKey("CreatorId")] public UserClaimsDto? CreatorUSer { get; set; }
         public List<PostLikes>? PostLikes { get; set; } = new List<PostLikes>();

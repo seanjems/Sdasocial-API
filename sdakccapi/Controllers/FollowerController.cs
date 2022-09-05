@@ -73,6 +73,7 @@ namespace sdakccapi.Controllers
             {
                 return NotFound();
             }
+            var baseLink = Request != null ? $"{Request?.Scheme}://{Request?.Host.Value}/" : null;
             int numberPerpage = 15;
             //if on timeline
             List<PostLikes> suggestedFollows = new List<PostLikes>();
@@ -86,7 +87,7 @@ namespace sdakccapi.Controllers
             int count = 0;
             foreach (var following in query)
             {
-                bool noFollowBack = !_context.followers.Where(x => x.UserId != currentUser.UserId && x.FollowingId != following.UserId).Any();
+                bool noFollowBack = !(_context.followers.Where(x => x.UserId != currentUser.UserId && x.FollowingId != following.UserId).Any());
                 if (noFollowBack)
                 {
                     var user = await _userManager.FindByIdAsync(following.UserId);
@@ -116,7 +117,7 @@ namespace sdakccapi.Controllers
                     foreach (var friendTheyFollow in queryThierFriends)
                     {
                         
-                        bool noFollowBack = !_context.followers.Where(x => x.UserId == currentUser.UserId && x.FollowingId == friendTheyFollow.UserId).Any();
+                        bool noFollowBack = !(_context.followers.Where(x => x.UserId == currentUser.UserId && x.FollowingId == friendTheyFollow.UserId).Any());
                         if (noFollowBack)
                         {
                             var user = await _userManager.FindByIdAsync(friendTheyFollow.UserId);
@@ -161,6 +162,10 @@ namespace sdakccapi.Controllers
                 {                   
                     suggestedFollows.Add(new PostLikes(user));
                 }
+            }
+            foreach (var item in suggestedFollows)
+            {
+                item.ProfilePicUrl = !string.IsNullOrEmpty(item.ProfilePicUrl)? baseLink + item.ProfilePicUrl: "https://www.seekpng.com/png/detail/143-1435868_headshot-silhouette-person-placeholder.png";
             }
             return suggestedFollows;
             
