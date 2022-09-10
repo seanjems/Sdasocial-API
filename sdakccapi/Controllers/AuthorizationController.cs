@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -85,8 +86,8 @@ namespace sdakccapi.Controllers
             }
             return BadRequest(result.Errors);
         }
-        [Authorize]
-        [HttpGet]
+       // [Authorize]
+        [NonAction]
         public UserClaimsDto GetCurrentUser(HttpContext httpContext)
         {
             var identity = httpContext?.User?.Identity as ClaimsIdentity;
@@ -102,7 +103,23 @@ namespace sdakccapi.Controllers
             }
             return null;
         }
+        [Authorize]
+        [NonAction]
+        public UserClaimsDto GetCurrentUser(HubCallerContext hubContext)
+        {
+            var identity = hubContext?.User?.Identity as ClaimsIdentity;
 
+            if (identity != null)
+            {
+                var userClaims = identity.Claims;
+                var userDetails = userClaims.FirstOrDefault(x => x.Type == "user")?.Value;
+                if (userDetails == null) return null;
+                var userClaimsDto = JsonConvert.DeserializeObject<UserClaimsDto>(userDetails);
+                return userClaimsDto;
+
+            }
+            return null;
+        }
         [Authorize(AuthenticationSchemes =
         JwtBearerDefaults.AuthenticationScheme)]
         [HttpPut]

@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using sdakccapi.Dtos.SignalRDto;
+using sdakccapi.Hubs;
 using sdakccapi.Infrastructure;
 using sdakccapi.Models.Entities;
 using System.Configuration;
@@ -15,6 +17,8 @@ var builder = WebApplication.CreateBuilder(args);
 //private const string _defaultCorsPolicyName = "localhost";
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<Dictionary<string, UserConnectionDto>>(opts => new Dictionary<string, UserConnectionDto>());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 //builder.Services.AddSwaggerGen();
@@ -76,20 +80,76 @@ builder.Services.AddIdentity<AppUser, IdentityRole>
             })
             .AddEntityFrameworkStores<sdakccapiDbContext>()
             .AddDefaultTokenProviders();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+
+    options.Events = new JwtBearerEvents
     {
-        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        OnMessageReceived = context =>
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-        };
-    });
+            var accessToken = context.Request.Query["access_token"];
+
+            // If the request is for our hub...
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) &&
+                (path.StartsWithSegments("/chat")))
+            {
+                // Read the token out of the query string
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
+    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+});
+
+//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//    .AddJwtBearer(options =>
+//    {
+
+//        options.Events = new JwtBearerEvents
+//        {
+//            OnMessageReceived = context =>
+//            {
+//                var accessToken = context.Request.Query["access_token"];
+
+//                // If the request is for our hub...
+//                var path = context.HttpContext.Request.Path;
+//                if (!string.IsNullOrEmpty(accessToken) &&
+//                    (path.StartsWithSegments("/chat")))
+//                {
+//                    // Read the token out of the query string
+//                    context.Token = accessToken;
+//                }
+//                return Task.CompletedTask;
+//            }
+//        };
+//        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+//        {
+//            ValidateIssuer = true,
+//            ValidateAudience = true,
+//            ValidateLifetime = true,
+//            ValidateIssuerSigningKey = true,
+//            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+//            ValidAudience = builder.Configuration["Jwt:Audience"],
+//            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+//        };
+//    });
 builder.Services.AddMvc().AddControllersAsServices();
 builder.Services.AddControllers().AddControllersAsServices();
 builder.Services.AddRazorPages();
@@ -113,6 +173,7 @@ app.UseAuthentication();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
+    endpoints.MapHub<ChatHub>("/chat");
 });
 
 //app.MapControllers();

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using sdakccapi.Infrastructure;
 
@@ -11,9 +12,10 @@ using sdakccapi.Infrastructure;
 namespace sdakccapi.Migrations
 {
     [DbContext(typeof(sdakccapiDbContext))]
-    partial class sdakccapiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220909021859_moreUpdatesToHubsLogic")]
+    partial class moreUpdatesToHubsLogic
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -370,6 +372,13 @@ namespace sdakccapi.Migrations
                     b.Property<long>("ConversationId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("ConnectionId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("ConversationsId")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
@@ -381,7 +390,7 @@ namespace sdakccapi.Migrations
 
                     b.HasKey("UserId", "ConversationId");
 
-                    b.HasIndex("ConversationId");
+                    b.HasIndex("ConversationsId");
 
                     b.ToTable("conversationMembers");
                 });
@@ -563,9 +572,7 @@ namespace sdakccapi.Migrations
                 {
                     b.HasOne("sdakccapi.Models.Entities.Conversations", null)
                         .WithMany("Members")
-                        .HasForeignKey("ConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ConversationsId");
 
                     b.HasOne("sdakccapi.Models.Entities.AppUser", "Users")
                         .WithMany()

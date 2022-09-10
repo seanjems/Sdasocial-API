@@ -171,7 +171,7 @@ namespace sdakccapi.Controllers
             
         }
 
-        // GET: api/follower/getfollowersuggest
+        // GET: api/follower/getfollowers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<PostLikes>>> GetUsersFollowers(int page=1, string userId=null)
         {
@@ -200,9 +200,9 @@ namespace sdakccapi.Controllers
             return friendsList;
         }
 
-        // GET: api/follower/getfollowersuggest
+        // GET: api/follower/getfollowing
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PostLikes>>> GetUsersFollowing(int page = 1, string userId = null)
+        public async Task<ActionResult<IEnumerable<PostLikes>>> GetUsersFollowing(int page = 1, string? userId = null)
         {
             if (_context.followers == null)
             {
@@ -214,16 +214,19 @@ namespace sdakccapi.Controllers
             if (currentUser == null) return BadRequest("Target user is null");
             List<PostLikes> friendsList = new List<PostLikes>();
 
+            var baseLink = Request != null ? $"{Request?.Scheme}://{Request?.Host.Value}/" : null;
+
             var myFollowingList = _context.followers
                  .Where(x => x.UserId == currentUser)
-                 .Skip(page * numberPerpage)
+                 .Skip((page-1) * numberPerpage)
                  .Take(numberPerpage).ToList(); //TODO: sort by interaction score
-
 
             foreach (var follower in myFollowingList)
             {
                 var user = await _userManager.FindByIdAsync(follower.FollowingId);
-                friendsList.Add(new PostLikes(user));
+                var item = new PostLikes(user);
+                item.ProfilePicUrl = !string.IsNullOrEmpty(item.ProfilePicUrl) ? baseLink + item.ProfilePicUrl : "https://www.seekpng.com/png/detail/143-1435868_headshot-silhouette-person-placeholder.png";
+                friendsList.Add(item);
             }
             return friendsList;
 

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using sdakccapi.Infrastructure;
 
@@ -11,9 +12,10 @@ using sdakccapi.Infrastructure;
 namespace sdakccapi.Migrations
 {
     [DbContext(typeof(sdakccapiDbContext))]
-    partial class sdakccapiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220906185703_AddedTablesRelatedToMessaging")]
+    partial class AddedTablesRelatedToMessaging
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -153,28 +155,6 @@ namespace sdakccapi.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("sdakccapi.Models.Entities.ActiveUsers", b =>
-                {
-                    b.Property<string>("ConnectionId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("CreatedTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DateModified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("ConnectionId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("activeUsers");
                 });
 
             modelBuilder.Entity("sdakccapi.Models.Entities.AppUser", b =>
@@ -362,6 +342,32 @@ namespace sdakccapi.Migrations
                     b.ToTable("comments");
                 });
 
+            modelBuilder.Entity("sdakccapi.Models.Entities.ConnectionIds", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<long>("ConversationId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("connectionIds");
+                });
+
             modelBuilder.Entity("sdakccapi.Models.Entities.ConversationMembers", b =>
                 {
                     b.Property<string>("UserId")
@@ -381,8 +387,6 @@ namespace sdakccapi.Migrations
 
                     b.HasKey("UserId", "ConversationId");
 
-                    b.HasIndex("ConversationId");
-
                     b.ToTable("conversationMembers");
                 });
 
@@ -400,7 +404,16 @@ namespace sdakccapi.Migrations
                     b.Property<DateTime>("DateModified")
                         .HasColumnType("datetime2");
 
+                    b.Property<long>("MembersConversationId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MembersUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("MembersUserId", "MembersConversationId");
 
                     b.ToTable("conversations");
                 });
@@ -537,17 +550,6 @@ namespace sdakccapi.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("sdakccapi.Models.Entities.ActiveUsers", b =>
-                {
-                    b.HasOne("sdakccapi.Models.Entities.AppUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("sdakccapi.Models.Entities.Comments", b =>
                 {
                     b.HasOne("sdakccapi.Models.Entities.AppUser", "User")
@@ -559,21 +561,15 @@ namespace sdakccapi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("sdakccapi.Models.Entities.ConversationMembers", b =>
+            modelBuilder.Entity("sdakccapi.Models.Entities.Conversations", b =>
                 {
-                    b.HasOne("sdakccapi.Models.Entities.Conversations", null)
-                        .WithMany("Members")
-                        .HasForeignKey("ConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("sdakccapi.Models.Entities.AppUser", "Users")
+                    b.HasOne("sdakccapi.Models.Entities.ConversationMembers", "Members")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("MembersUserId", "MembersConversationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Users");
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("sdakccapi.Models.Entities.Like", b =>
@@ -592,11 +588,6 @@ namespace sdakccapi.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("sdakccapi.Models.Entities.Conversations", b =>
-                {
-                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("sdakccapi.Models.Entities.Posts", b =>
