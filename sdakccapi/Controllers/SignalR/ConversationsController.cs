@@ -111,10 +111,11 @@ namespace sdakccapi.Controllers
         }
 
         [NonAction]
-        public async Task<List<PostLikes>> GetAllChatHeadsPerUser(HubCallerContext? context,int page = 1  )
+        public async Task<List<PostLikes>> GetAllChatHeadsPerUser(HubCallerContext? context, int page = 1)
         {
             string currentUserId;
-            if (context!=null){
+            if (context != null)
+            {
                 currentUserId = _authorizationController.GetCurrentUser(context).UserId;
             }
             else
@@ -125,10 +126,16 @@ namespace sdakccapi.Controllers
             if (string.IsNullOrEmpty(currentUserId)) return null;
 
             int numberPage = 50;
-            var conversation = _context.conversations.Include("Members")
-                 .Where(x => x.Members.Where(b => b.UserId == currentUserId).Any())
-                 .GroupBy(p => p.Members)
-                 .Select(g => g.First()).ToList();
+            //var conversation = _context.conversations.Include("Members")
+            //     .Where(x => x.Members.Where(b => b.UserId == currentUserId).Any())
+            //     .GroupBy(p => p.Members)
+            //     .Select(g => g.First()).ToList();
+
+            var conversation1 = _context.conversations.Include("Members");
+
+            var conversation = conversation1.Where(x => x.Members.Where(b => b.UserId == currentUserId).Any()).ToList();
+
+
             var chatsOut = new List<PostLikes>();
 
             var baseLink = Request != null ? $"{Request?.Scheme}://{Request?.Host.Value}/" : null;
@@ -143,7 +150,7 @@ namespace sdakccapi.Controllers
 
                 chatsOut.Add(item);
             }
-            
+
             //TODO: add last message and order by last message
             return chatsOut;
         }
