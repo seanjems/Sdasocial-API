@@ -40,7 +40,7 @@ namespace sdakccapi.Controllers
           {
               return Problem("Entity set 'sdakccapiDbContext.likes'  is null.");
           }
-           
+            var request = Request;
             //read user from user context
             var currentUserId = _authorizationController.GetCurrentUser(HttpContext)?.UserId;
             if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();

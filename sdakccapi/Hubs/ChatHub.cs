@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using sdakccapi.Controllers;
+using sdakccapi.Controllers.SignalR;
 using sdakccapi.Dtos.SignalRDto;
 using sdakccapi.Models.Entities;
+using System.Globalization;
 
 namespace sdakccapi.Hubs
 {
@@ -15,14 +17,16 @@ namespace sdakccapi.Hubs
         private readonly AuthorizationController _authorizationController;
         private readonly ActiveUsersController _activeUsersController;
         private readonly ConversationsController _conversationsController;
+        private readonly ChatsController _chatsController;
 
 
-        public ChatHub( AuthorizationController authorizationController, ActiveUsersController activeUsersController,ConversationsController conversationsController)
+        public ChatHub( AuthorizationController authorizationController, ActiveUsersController activeUsersController,ConversationsController conversationsController, ChatsController chatsController)
         {
             //_connections = connections;
             _authorizationController = authorizationController;
             _activeUsersController = activeUsersController;
             _conversationsController = conversationsController;
+            _chatsController = chatsController;
         }
         public override async Task<Task> OnDisconnectedAsync(Exception exception)
         {
@@ -85,10 +89,11 @@ namespace sdakccapi.Hubs
 
                 //send new onlineuser to ui
                 foreach (var connection in listOfwork)
-                {              
-
-                    await Clients.Group($"{connection.conversationId}").SendAsync("ReceiveUsers", connection.ActiveMembersList);
-
+                {
+                    await Groups.AddToGroupAsync(Context.ConnectionId, Context.ConnectionId);
+                    await Clients.Group(Context.ConnectionId).SendAsync("ReceiveUsers", connection.ActiveMembersList);
+                    //reset temp group
+                    await Groups.RemoveFromGroupAsync(Context.ConnectionId, Context.ConnectionId);
                 }
 
                 //update hubgroups
@@ -130,11 +135,43 @@ namespace sdakccapi.Hubs
             if (connection !=null){
                 //await Clients.Group(userConnectionDto.Room)
                 //    .SendAsync("ReceiveMessage", userConnectionDto.User, message);
-                
-                await Clients.Group($"{connection.Id}").SendAsync("ReceiveMessage",currentUser.UserId, message.MessageText);
-                
+                var CreatedAt = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
+                var senderId = currentUser.UserId;
+                var receiverId = message.ReceiverId;
+                await Clients.Group($"{connection.Id}").SendAsync("ReceiveMessage",senderId,receiverId ,message.MessageText, CreatedAt);
+
 
                 //save a copy of the message in the db;
+                var chatBackup = new Chats()
+                {
+                    conversationId = connection.Id,
+                    CreatedDate = DateTime.UtcNow,
+                    DateModified = DateTime.UtcNow,
+                    isDeleted = false,
+                    UserId = senderId,
+                    TextMessage = message.MessageText,
+                    
+                };
+                _chatsController.PostChatsPerUser(chatBackup);
+            }
+
+        }
+
+        
+        public async Task RefreshChatHeads()
+        {
+            //get current user
+         
+            var chats = await _conversationsController.GetAllChatHeadsPerUser(Context);
+
+            //use temp group to target sender device.
+            if (chats.Count()>0)
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, Context.ConnectionId);
+                await Clients.Group(Context.ConnectionId).SendAsync("ReceiveChatHeads", chats);
+                //reset temp group
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, Context.ConnectionId);
+               
             }
 
         }

@@ -14,10 +14,10 @@ namespace sdakccapi.Models.Entities
     public class Chats
     {
         public long Id { get; set; }
-        public string conversationId { get; set; }
+        public long conversationId { get; set; }
         public string UserId { get; set; }
-        public string TextMessage { get; set; }
-        public string ImageUrl { get; set; }
+        public string? TextMessage { get; set; }
+        public string? ImageUrl { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime DateModified { get; set; }
         public bool isDeleted { get; set; } = false;

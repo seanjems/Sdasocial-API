@@ -15,11 +15,11 @@ namespace sdakccapi.Dtos.PostsDto
 
         public PostLikes(AppUser user)
         {
-            UserId = user.Id;
-            FirstName = user.FirstName;
-            LastName = user.Lastname;
-            UserName = user.UserName;
-            ProfilePicUrl = user.ProfilePicUrl;
+            UserId = user?.Id;
+            FirstName = user?.FirstName;
+            LastName = user?.Lastname;
+            UserName = user?.UserName;
+            ProfilePicUrl = user?.ProfilePicUrl;
             
         }
         public PostLikes()

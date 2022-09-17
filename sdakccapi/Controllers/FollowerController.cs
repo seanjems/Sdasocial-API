@@ -26,24 +26,24 @@ namespace sdakccapi.Controllers
         private readonly AuthorizationController _authorizationController;
         private readonly sdakccapiDbContext _context;
         private readonly UserManager<AppUser> _userManager;
-        private  Random rng = new Random();
+        private Random rng = new Random();
         public FollowerController(sdakccapiDbContext context, AuthorizationController authorizationController, UserManager<AppUser> userManager)
         {
             _context = context;
             _authorizationController = authorizationController;
             _userManager = userManager;
         }
-        
+
 
         // POST: api/Likes
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<CreatedPostOutDto>> CreateFollower(CreateFollowerDto createFollowerDto)
         {
-          if (_context.followers == null)
-          {
-              return Problem("Entity set 'sdakccapiDbContext.folloers'  is null.");
-          }
+            if (_context.followers == null)
+            {
+                return Problem("Entity set 'sdakccapiDbContext.folloers'  is null.");
+            }
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var currentUser = _authorizationController.GetCurrentUser(HttpContext);
             var follower = new Follower(createFollowerDto);
@@ -57,12 +57,12 @@ namespace sdakccapi.Controllers
             }
             else
             {
-                 _context.followers.Remove(objFromDb);
+                _context.followers.Remove(objFromDb);
                 await _context.SaveChangesAsync();
             }
 
             var numberOfFollowers = _context.followers.Count(x => x.FollowingId == follower.FollowingId);
-            return Created("", new {userId = createFollowerDto.ToFollowId, numberOfFollowers =  numberOfFollowers});
+            return Created("", new { userId = createFollowerDto.ToFollowId, numberOfFollowers = numberOfFollowers });
         }
 
         // GET: api/follower/getfollowersuggest
@@ -82,7 +82,7 @@ namespace sdakccapi.Controllers
             var currentUser = _authorizationController.GetCurrentUser(HttpContext);
 
             //suggest follows based on who is following you
-            var query =  _context.followers
+            var query = _context.followers
                  .Where(x => x.FollowingId == currentUser.UserId);
             int count = 0;
             foreach (var following in query)
@@ -94,7 +94,7 @@ namespace sdakccapi.Controllers
                     suggestedFollows.Add(new PostLikes(user));
                     count++;
                 }
-                if (count>=20)
+                if (count >= 20)
                 {
                     break;
                 }
@@ -107,7 +107,7 @@ namespace sdakccapi.Controllers
                 var myFriends = _context.followers
                  .Where(x => x.UserId == currentUser.UserId).Take(50); //TODO: sort by interaction score
 
-             
+
                 int countThierFriends = 0;
                 foreach (var friend in myFriends)
                 {
@@ -116,7 +116,7 @@ namespace sdakccapi.Controllers
 
                     foreach (var friendTheyFollow in queryThierFriends)
                     {
-                        
+
                         bool noFollowBack = !(_context.followers.Where(x => x.UserId == currentUser.UserId && x.FollowingId == friendTheyFollow.UserId).Any());
                         if (noFollowBack)
                         {
@@ -124,18 +124,18 @@ namespace sdakccapi.Controllers
                             suggestedFollows.Add(new PostLikes(user));
                             countThierFriends++;
                         }
-                        
-                        if (countThierFriends >= 5 ) //get their top 5 friends
+
+                        if (countThierFriends >= 5) //get their top 5 friends
                         {
                             break;
                         }
-                        
+
                     }
                     if (suggestedFollows.Count() >= 20) break;
                 }
             }
 
-            if (suggestedFollows.Count()==0)
+            if (suggestedFollows.Count() == 0)
             {
                 //default  get 20 most followed people from system
                 var defaultFriends = _context.followers.GroupBy(x => x.FollowingId)
@@ -153,27 +153,27 @@ namespace sdakccapi.Controllers
 
             if (suggestedFollows.Count() == 0)
             {
-                
 
-                var defaultUsers = _userManager.Users.Where(x=>string.IsNullOrEmpty(x.ProfilePicUrl)).Take(500).ToList();
+
+                var defaultUsers = _userManager.Users.Where(x => string.IsNullOrEmpty(x.ProfilePicUrl)).Take(500).ToList();
                 int n = defaultUsers.Count() + 1;
                 var defaultUsersShuffled = defaultUsers.OrderBy(a => rng.Next(n)).Take(20).ToList();
                 foreach (var user in defaultUsersShuffled)
-                {                   
+                {
                     suggestedFollows.Add(new PostLikes(user));
                 }
             }
             foreach (var item in suggestedFollows)
             {
-                item.ProfilePicUrl = !string.IsNullOrEmpty(item.ProfilePicUrl)? baseLink + item.ProfilePicUrl: "https://www.seekpng.com/png/detail/143-1435868_headshot-silhouette-person-placeholder.png";
+                item.ProfilePicUrl = !string.IsNullOrEmpty(item.ProfilePicUrl) ? baseLink + item.ProfilePicUrl : "https://www.seekpng.com/png/detail/143-1435868_headshot-silhouette-person-placeholder.png";
             }
             return suggestedFollows;
-            
+
         }
 
         // GET: api/follower/getfollowers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PostLikes>>> GetUsersFollowers(int page=1, string userId=null)
+        public async Task<ActionResult<IEnumerable<PostLikes>>> GetUsersFollowers(int page = 1, string userId = null)
         {
             if (_context.followers == null)
             {
@@ -181,13 +181,13 @@ namespace sdakccapi.Controllers
             }
             int numberPerpage = 15;
             //if on timeline
-            var currentUser = userId?? _authorizationController.GetCurrentUser(HttpContext)?.UserId;
+            var currentUser = userId ?? _authorizationController.GetCurrentUser(HttpContext)?.UserId;
             if (currentUser == null) return BadRequest("Target user is null");
             List<PostLikes> friendsList = new List<PostLikes>();
-                
-            var myFollowersList =  _context.followers
+
+            var myFollowersList = _context.followers
                  .Where(x => x.FollowingId == currentUser)
-                 .Skip(page*numberPerpage)
+                 .Skip(page * numberPerpage)
                  .Take(numberPerpage).ToList(); //TODO: sort by interaction score
 
 
@@ -196,8 +196,27 @@ namespace sdakccapi.Controllers
                 var user = await _userManager.FindByIdAsync(follower.UserId);
                 friendsList.Add(new PostLikes(user));
             }
-           
+
             return friendsList;
+        }
+
+
+        // GET: api/follower/getfollowers
+        [HttpGet("{id}")]
+        public async Task<ActionResult<PostLikes>> GetSpecificUser(string id)
+        {
+            if (_context.followers == null)
+            {
+                return NotFound();
+            }
+
+            //if on timeline
+            var currentUser = _authorizationController.GetCurrentUser(HttpContext)?.UserId;
+            if (currentUser == null) return Unauthorized("You are not authorized");
+        
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+            return new PostLikes(user);
         }
 
         // GET: api/follower/getfollowing
@@ -218,7 +237,7 @@ namespace sdakccapi.Controllers
 
             var myFollowingList = _context.followers
                  .Where(x => x.UserId == currentUser)
-                 .Skip((page-1) * numberPerpage)
+                 .Skip((page - 1) * numberPerpage)
                  .Take(numberPerpage).ToList(); //TODO: sort by interaction score
 
             foreach (var follower in myFollowingList)

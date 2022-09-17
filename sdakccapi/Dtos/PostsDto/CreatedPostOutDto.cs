@@ -24,7 +24,8 @@ namespace sdakccapi.Dtos.PostsDto
         public int Comments { get; set; }
         public int Shares { get; set; }
         public bool Liked { get; set; }
-        [ForeignKey("CreatorId")] public UserClaimsDto? CreatorUSer { get; set; }
+        public DateTime CreatedAt { get; set; }
+        [ForeignKey("CreatorId")] public PostLikes? CreatorUSer { get; set; }
         public List<PostLikes>? PostLikes { get; set; } = new List<PostLikes>();
 
 
@@ -40,6 +41,7 @@ namespace sdakccapi.Dtos.PostsDto
             Desc = post.Description;
             Img =  post.ImageUrl;
             PostType = post.PostType;
+            CreatedAt = post.CreatedTime;
             Name = $"{post.User?.FirstName} {post.User?.Lastname}";
         }
 
