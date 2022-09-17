@@ -20,7 +20,8 @@ namespace sdakccapi.Controllers.SignalR
         private readonly ILogger<ConversationsController> _logger;
         private readonly FollowerController _followerController;
         private readonly UserManager<AppUser> _userManager;
-        public ChatsController(sdakccapiDbContext context, IWebHostEnvironment webHostEnvironment, AuthorizationController authorizationController, ILogger<ConversationsController> logger, FollowerController followerController, UserManager<AppUser> userManager)
+        private readonly ConversationsController _conversationController;
+        public ChatsController(sdakccapiDbContext context, IWebHostEnvironment webHostEnvironment, AuthorizationController authorizationController, ILogger<ConversationsController> logger, FollowerController followerController, UserManager<AppUser> userManager, ConversationsController conversationController)
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
@@ -28,8 +29,9 @@ namespace sdakccapi.Controllers.SignalR
             _logger = logger;
             _followerController = followerController;
             _userManager = userManager;
+            _conversationController = conversationController;
         }
-     
+
         [HttpGet]
         [Authorize(AuthenticationSchemes =
             JwtBearerDefaults.AuthenticationScheme)]
@@ -42,13 +44,22 @@ namespace sdakccapi.Controllers.SignalR
             int numberPerPage = 50;
             //var posts = await _context.posts.FindAsync(id);
             var currentUser = _authorizationController.GetCurrentUser(HttpContext);
+
             var chatsList = new List<ChatOut>();
 
             if (currentUser == null) return Unauthorized();
+            var conversations = _context.conversations.Include("Members")
+                .Where(x => x.Members.Where(b => b.UserId == currentUser.UserId).Any()).ToList();
 
-            var chats = await _context.chats
-                .Where(x => x.UserId == currentUser.UserId).OrderByDescending(x=>x.CreatedDate)
+
+            var chats =  await _context.chats
+                .Where(x => conversations.Select(x=>x.Id).ToArray()
+                .Any(f=> x.conversationId ==f ))
+                .OrderByDescending(x=>x.CreatedDate)
                 .Skip((page - 1) * numberPerPage).Take(numberPerPage).ToListAsync();
+
+
+
             foreach (var item in chats)
             {
                 var chatOut = new ChatOut(item);
