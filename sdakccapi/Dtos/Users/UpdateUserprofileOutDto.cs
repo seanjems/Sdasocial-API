@@ -30,6 +30,7 @@ namespace sdakccapi.Dtos.Users
         }
         public UpdateUserprofileOutDto(AppUser user)
         {
+            UserId = user.Id;
             Aboutme = user.Aboutme;
             LocalChurch = user.LocalChurch;
             Contacts = user.Contacts;  

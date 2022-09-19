@@ -192,19 +192,28 @@ namespace sdakccapi.Controllers
 
         }
         // GET: api/Posts/5
-        [HttpGet("{id}")]
+        [HttpGet]
         [Authorize(AuthenticationSchemes =
         JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<IActionResult> GetUserProfile(string id)
+        public async Task<IActionResult> GetUserProfile(string id=null, string userName=null)
         {
-
-            var user = await _userManager.FindByIdAsync(id);
-             
-
-            if (user == null)
+            if (id == null && userName == null)
             {
-                return NotFound("User not found.");
+                ModelState.AddModelError("", "Both Username and Id cannot be null for this request");
+                return BadRequest(ModelState);
             }
+            AppUser user;
+            if (!string.IsNullOrEmpty(userName) && userName != "null" && userName != "undefined")
+            {
+                user = await _userManager.FindByNameAsync(userName);
+            }
+            else
+            {
+                user = await _userManager.FindByIdAsync(id);
+            }
+
+            if (user == null) return NotFound("User not found");
+            
 
             var baseLink = Request != null ? $"{Request?.Scheme}://{Request?.Host.Value}/" : null;
             //var list = new List<CreatedPostOutDto>();

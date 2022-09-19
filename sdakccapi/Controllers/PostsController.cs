@@ -102,8 +102,8 @@ namespace sdakccapi.Controllers
             foreach (var post in posts)
             {
                 var postOut = PostWithDetails(post);
-                //postOut.CreatorUSer = new UserClaimsDto(post.User);
-                //postOut.Img = baseLink + post.ImageUrl;
+                postOut.CreatorUSer.ProfilePicUrl = !string.IsNullOrEmpty(postOut.CreatorUSer.ProfilePicUrl) ? baseLink + postOut.CreatorUSer.ProfilePicUrl : "https://www.seekpng.com/png/detail/143-1435868_headshot-silhouette-person-placeholder.png";
+                postOut.Img = !string.IsNullOrEmpty(postOut.Img) ? baseLink + post.ImageUrl:null;
                 list.Add(postOut);
             }
 
@@ -154,7 +154,7 @@ namespace sdakccapi.Controllers
             //postOut.Likes = postsLikes.Count();
             //postOut.Liked = postsLikes.Where(x => x.UserId == currentUser?.UserId).Count() > 0;
             //postOut.CreatorUSer = new PostLikes(post.User);
-            //postOut.Img = baseLink + post.ImageUrl;
+            postOut.Img = !string.IsNullOrEmpty(post.ImageUrl)?baseLink + post.ImageUrl: "https://www.seekpng.com/png/detail/143-1435868_headshot-silhouette-person-placeholder.png";
 
             return postOut;
         }
@@ -278,15 +278,15 @@ namespace sdakccapi.Controllers
 
             // var postsOut = new CreatedPostOutDto(postsEntity);
             var postsOut = PostWithDetails(postsEntity);
-            //var baseLink = $"{Request.Scheme}://{Request.Host.Value}/";
+            var baseLink = $"{Request.Scheme}://{Request.Host.Value}/";
 
-            ////edit image path
-            //postsOut.Img = baseLink + postsOut.Img;
+            //edit image path
+            postsOut.Img = !string.IsNullOrEmpty(postsOut.Img)?baseLink + postsOut.Img:null;
 
-            ////TODO: GET user details from claims
+            //TODO: GET user details from claims
 
-            
-            //postsOut.Name = $"{currentUser.FirstName} {currentUser.LastName}";
+
+            postsOut.Name = $"{currentUser.FirstName} {currentUser.LastName}";
             return CreatedAtAction("GetPosts", postsOut);
         }
 
