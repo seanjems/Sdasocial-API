@@ -4,7 +4,7 @@ namespace sdakccapi.Dtos.SignalRDto
 {
     public class OnlineUsersOutDto
     {
-        public long conversationId { get; set; }
-        public List<ActiveUsersOutDto> ActiveMembersList { get; set; }
+        public string ConnectionId { get; set; }
+        public List<string> ActiveUserIds { get; set; }
     }
 }

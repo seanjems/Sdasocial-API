@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using sdakccapi.Dtos.SignalRDto;
 using sdakccapi.Infrastructure;
 using sdakccapi.Models.Entities;
@@ -57,36 +58,37 @@ namespace sdakccapi.Controllers
             //}
             //get conversations that have this new user
             var conversationsAffected = _context.conversationMembers.Where(x => x.UserId == UserIdOfNewConn).ToList();
-           
-            var listOfUserIds = conversationsAffected.Select(u=>u.UserId).ToList();
-            var activeUsersConversations = _context.activeUsers.Where(x => listOfUserIds.Contains(x.UserId)).ToList();
+
+            var conversationList = _context.conversations.Include("Members")
+                .Where(x => x.Members.Where(b => b.UserId == UserIdOfNewConn).Any())
+                .Select(x=>x.Members.Where(b=>b.UserId!=UserIdOfNewConn).Select(y=>y.UserId)).ToList()
+                .SelectMany(p=>p);
+
+            
+            var activeUsersConversations = _context.activeUsers.Where(x => conversationList.Contains(x.UserId)).ToList();
             //send them new list of active users
-            List<OnlineUsersOutDto> listMaster = new List<OnlineUsersOutDto>();
-            foreach (var conversation in conversationsAffected)
+            var onlineUsers = new List<OnlineUsersOutDto>();
+            foreach (var activeUser in activeUsersConversations.OrderByDescending(x=>x.CreatedTime).GroupBy(x=>x.UserId).First())
             {
-                var chatList = _context.conversationMembers.Where(x => x.ConversationId == conversation.ConversationId).ToList();
-                List<ActiveUsersOutDto> onlineMembers = new List<ActiveUsersOutDto>();
+                var conversationHeads = _context.conversations.Include("Members")
+                    .Where(x => x.Members.Where(b => b.UserId == activeUser.UserId).Any())
+                    .SelectMany(x=>x.Members).Where(y=>y.UserId!=activeUser.UserId)
+                    .Select(x=>x.UserId)
+                    .ToList();
 
-                foreach (var member in chatList)
-                {
-                    onlineMembers.Add(new ActiveUsersOutDto(member));
-                }
-                listMaster.Add(new OnlineUsersOutDto()
-                {
-                    conversationId = conversation.ConversationId,
-                    ActiveMembersList = onlineMembers
+                //add to return object ready for dispatch
+
+               
+                onlineUsers.Add(new OnlineUsersOutDto { 
+                    ConnectionId = activeUser.ConnectionId,
+                    ActiveUserIds = conversationHeads
                 });
-            }
-            return listMaster;
 
-            //var userIdsFromConv = chatConversationsForMemeber.Select(u => u.Members.UserId).ToList();
-            //var onlineUsers = _context.activeUsers.Where(x => userIdsFromConv.Contains(x.UserId)).ToList();
-            //var listOut = new List<ActiveUsersOutDto>();
-            //foreach (var member in onlineUsers)
-            //{
-            //    listOut.Add(new ActiveUsersOutDto(member));
-            //}
-            //return Ok(listOut);
+                
+            }
+            return onlineUsers;
+
+           
         }
 
         // DELETE: api/Posts/5

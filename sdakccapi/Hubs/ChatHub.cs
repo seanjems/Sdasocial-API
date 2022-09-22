@@ -38,7 +38,7 @@ namespace sdakccapi.Hubs
 
             foreach (var connection in conversationList)
             {
-                //add to hub groups
+                //remove from hub groups
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"{connection.ConversationId}");
             }
 
@@ -49,7 +49,10 @@ namespace sdakccapi.Hubs
             foreach (var connection in listOfwork)
             {
 
-                await Clients.Group($"{connection.conversationId}").SendAsync("ReceiveUsers", connection.ActiveMembersList);
+                await Groups.AddToGroupAsync(connection.ConnectionId, connection.ConnectionId);
+                await Clients.Group(connection.ConnectionId).SendAsync("ReceiveUsers", connection.ActiveUserIds);
+                //reset temp group
+                await Groups.RemoveFromGroupAsync(connection.ConnectionId, connection.ConnectionId);
 
             }
 
@@ -70,6 +73,9 @@ namespace sdakccapi.Hubs
                 var currentUser = _authorizationController.GetCurrentUser(Context);
                 if (currentUser == null) return;
 
+                //cleanup old active users
+
+
                 
                 //add it to db
                 var newUser = new ActiveUsers()
@@ -82,8 +88,6 @@ namespace sdakccapi.Hubs
                 //add to db
 
                  await _activeUsersController.PostActiveUsers(newUser);
-
-               
 
                 var listOfwork = _activeUsersController.GetAffectedConversationsWithNewLists(newUser.UserId);
 
@@ -135,7 +139,7 @@ namespace sdakccapi.Hubs
             if (connection !=null){
                 //await Clients.Group(userConnectionDto.Room)
                 //    .SendAsync("ReceiveMessage", userConnectionDto.User, message);
-                var CreatedAt = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
+                var CreatedAt = new DateTime(DateTime.UtcNow.Ticks).ToString("o");
                 var senderId = currentUser.UserId;
                 var receiverId = message.ReceiverId;
                 await Clients.Group($"{connection.Id}").SendAsync("ReceiveMessage",senderId,receiverId ,message.MessageText, CreatedAt);

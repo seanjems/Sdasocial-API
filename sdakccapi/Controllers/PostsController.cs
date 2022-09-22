@@ -154,7 +154,7 @@ namespace sdakccapi.Controllers
             //postOut.Likes = postsLikes.Count();
             //postOut.Liked = postsLikes.Where(x => x.UserId == currentUser?.UserId).Count() > 0;
             //postOut.CreatorUSer = new PostLikes(post.User);
-            postOut.Img = !string.IsNullOrEmpty(post.ImageUrl)?baseLink + post.ImageUrl: "https://www.seekpng.com/png/detail/143-1435868_headshot-silhouette-person-placeholder.png";
+            postOut.Img = !string.IsNullOrEmpty(post.ImageUrl)?baseLink + post.ImageUrl: null;
 
             return postOut;
         }
