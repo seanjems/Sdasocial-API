@@ -153,7 +153,7 @@ namespace sdakccapi.Controllers
             //var currentUser = _authorizationController.GetCurrentUser(HttpContext);
             //postOut.Likes = postsLikes.Count();
             //postOut.Liked = postsLikes.Where(x => x.UserId == currentUser?.UserId).Count() > 0;
-            //postOut.CreatorUSer = new PostLikes(post.User);
+            postOut.CreatorUSer.ProfilePicUrl = !string.IsNullOrEmpty(postOut.CreatorUSer.ProfilePicUrl) ? baseLink + postOut.CreatorUSer.ProfilePicUrl : "https://www.seekpng.com/png/detail/143-1435868_headshot-silhouette-person-placeholder.png";
             postOut.Img = !string.IsNullOrEmpty(post.ImageUrl)?baseLink + post.ImageUrl: null;
 
             return postOut;

@@ -228,7 +228,7 @@ namespace sdakccapi.Controllers
             userProfile.Following = following.Count();
 
             userProfile.ProfilePicUrl = !string.IsNullOrEmpty(user.ProfilePicUrl) ? baseLink + user.ProfilePicUrl: "https://www.seekpng.com/png/detail/143-1435868_headshot-silhouette-person-placeholder.png";
-            userProfile.CoverPicUrl = !string.IsNullOrEmpty(user.CoverPhotoUrl)? baseLink + user.CoverPhotoUrl: "https://via.placeholder.com/728x90.png?text=No+Cover+Image";
+            userProfile.CoverPicUrl = !string.IsNullOrEmpty(user.CoverPhotoUrl)? baseLink + user.CoverPhotoUrl: "https://via.placeholder.com/728x500.png?text=No+Cover+Image";
             
             return Ok(userProfile);
         }

@@ -104,7 +104,7 @@ namespace sdakccapi.Controllers
 
                 var commentOut = new CommentOutDto(comment);
                 commentOut.CommentImageUrl = !string.IsNullOrEmpty(commentOut.CommentImageUrl) ? baseLink + commentOut.CommentImageUrl : null;
-                commentOut.avatarUrl = !string.IsNullOrEmpty(commentOut.avatarUrl) ? baseLink + commentOut.avatarUrl : null;
+                commentOut.avatarUrl = !string.IsNullOrEmpty(commentOut.avatarUrl) ? baseLink + commentOut.avatarUrl : "https://www.seekpng.com/png/detail/143-1435868_headshot-silhouette-person-placeholder.png";
                 // commentOut.Text = $"<span style=\"word-wrap: break-word;\"/>{commentOut.Text} </span>";
                 //commbine comment image  and text to make dangerously set html
                 if (!string.IsNullOrEmpty(commentOut.CommentImageUrl))
@@ -120,7 +120,7 @@ namespace sdakccapi.Controllers
 
                     var commentOut2 = new CommentOutDto(comment2);
                     commentOut2.CommentImageUrl = !string.IsNullOrEmpty(commentOut2.CommentImageUrl) ? baseLink + commentOut2.CommentImageUrl : null;
-                    commentOut2.avatarUrl = !string.IsNullOrEmpty(commentOut2.avatarUrl) ? baseLink + commentOut2.avatarUrl : null;
+                    commentOut2.avatarUrl = !string.IsNullOrEmpty(commentOut2.avatarUrl) ? baseLink + commentOut2.avatarUrl : "https://www.seekpng.com/png/detail/143-1435868_headshot-silhouette-person-placeholder.png";
 
                     if (!string.IsNullOrEmpty(commentOut2.CommentImageUrl))
                     {
