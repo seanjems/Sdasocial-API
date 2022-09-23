@@ -62,30 +62,38 @@ namespace sdakccapi.Controllers
             var conversationList = _context.conversations.Include("Members")
                 .Where(x => x.Members.Where(b => b.UserId == UserIdOfNewConn).Any())
                 .Select(x=>x.Members.Where(b=>b.UserId!=UserIdOfNewConn).Select(y=>y.UserId)).ToList()
-                .SelectMany(p=>p);
+                .SelectMany(p=>p).ToList();
 
-            
+            conversationList.Add(UserIdOfNewConn);
             var activeUsersConversations = _context.activeUsers.Where(x => conversationList.Contains(x.UserId)).ToList();
             //send them new list of active users
             var onlineUsers = new List<OnlineUsersOutDto>();
-            foreach (var activeUser in activeUsersConversations.OrderByDescending(x=>x.CreatedTime).GroupBy(x=>x.UserId).First())
-            {
-                var conversationHeads = _context.conversations.Include("Members")
-                    .Where(x => x.Members.Where(b => b.UserId == activeUser.UserId).Any())
-                    .SelectMany(x=>x.Members).Where(y=>y.UserId!=activeUser.UserId)
-                    .Select(x=>x.UserId)
-                    .ToList();
-
+           
+            
+                foreach (var activeUser in activeUsersConversations
+                    //.OrderByDescending(x => x.CreatedTime).GroupBy(x => x.UserId).First()
+                    )
+                {
+                    var conversationHeads = _context.conversations.Include("Members")
+                        .Where(x => x.Members.Where(b => b.UserId == activeUser.UserId).Any())
+                        .SelectMany(x => x.Members).Where(y => y.UserId != activeUser.UserId)
+                        .Select(x => x.UserId)
+                        .ToList();
+                var online = conversationHeads.Where(x => activeUsersConversations.Select(b=>b.UserId).Contains(x)).ToList();
                 //add to return object ready for dispatch
 
-               
-                onlineUsers.Add(new OnlineUsersOutDto { 
-                    ConnectionId = activeUser.ConnectionId,
-                    ActiveUserIds = conversationHeads
-                });
 
-                
-            }
+                onlineUsers.Add(new OnlineUsersOutDto
+                    {
+                        ConnectionId = activeUser.ConnectionId,
+                        ActiveUserIds = online
+                    });
+
+
+                }
+
+           
+           
             return onlineUsers;
 
            
@@ -93,7 +101,7 @@ namespace sdakccapi.Controllers
 
         // DELETE: api/Posts/5
         [NonAction]
-        public async Task<IActionResult> DeletePosts(string ConnectionId)
+        public async Task<IActionResult> DeleteFromActiveUsers(string ConnectionId)
         {
             if (_context.activeUsers == null) return NotFound();
 
@@ -102,6 +110,23 @@ namespace sdakccapi.Controllers
 
 
             _context.activeUsers.Remove(connection);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // DELETE: api/Posts/5
+        [NonAction]
+        public async Task<IActionResult> DeleteOldActiveUsers(string userId)
+        {
+            if (_context.activeUsers == null) return NotFound();
+
+            //deleting all old users for now but to modify this in  future
+            var connection =  _context.activeUsers.Where(x=>x.UserId==userId && x.CreatedTime.AddHours(0)<DateTime.Now).ToList();
+            if (connection.Count() ==0) return NotFound();
+
+
+            _context.activeUsers.RemoveRange(connection);
             await _context.SaveChangesAsync();
 
             return NoContent();

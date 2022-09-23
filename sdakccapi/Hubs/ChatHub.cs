@@ -41,9 +41,12 @@ namespace sdakccapi.Hubs
                 //remove from hub groups
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"{connection.ConversationId}");
             }
+            //remove from online users
+
+            var delete = await _activeUsersController.DeleteFromActiveUsers(Context.ConnectionId);
 
             //updateOnlineUsers
-            var listOfwork = _activeUsersController.GetAffectedConversationsWithNewLists(currentUser.UserId);
+            var listOfwork =  _activeUsersController.GetAffectedConversationsWithNewLists(currentUser.UserId);
 
             //send new onlineuser to ui
             foreach (var connection in listOfwork)
@@ -75,7 +78,7 @@ namespace sdakccapi.Hubs
 
                 //cleanup old active users
 
-
+               await _activeUsersController.DeleteOldActiveUsers(currentUser.UserId);
                 
                 //add it to db
                 var newUser = new ActiveUsers()
@@ -89,16 +92,31 @@ namespace sdakccapi.Hubs
 
                  await _activeUsersController.PostActiveUsers(newUser);
 
+
+                //updateOnlineUsers
                 var listOfwork = _activeUsersController.GetAffectedConversationsWithNewLists(newUser.UserId);
 
                 //send new onlineuser to ui
                 foreach (var connection in listOfwork)
                 {
-                    await Groups.AddToGroupAsync(Context.ConnectionId, Context.ConnectionId);
-                    await Clients.Group(Context.ConnectionId).SendAsync("ReceiveUsers", connection.ActiveMembersList);
+
+                    await Groups.AddToGroupAsync(connection.ConnectionId, connection.ConnectionId);
+                    await Clients.Group(connection.ConnectionId).SendAsync("ReceiveUsers", connection.ActiveUserIds);
                     //reset temp group
-                    await Groups.RemoveFromGroupAsync(Context.ConnectionId, Context.ConnectionId);
+                    await Groups.RemoveFromGroupAsync(connection.ConnectionId, connection.ConnectionId);
+
                 }
+
+                //var listOfwork = _activeUsersController.GetAffectedConversationsWithNewLists(newUser.UserId);
+
+                ////send new onlineuser to ui
+                //foreach (var connection in listOfwork)
+                //{
+                //    await Groups.AddToGroupAsync(Context.ConnectionId, Context.ConnectionId);
+                //    await Clients.Group(Context.ConnectionId).SendAsync("ReceiveUsers", connection.ActiveMembersList);
+                //    //reset temp group
+                //    await Groups.RemoveFromGroupAsync(Context.ConnectionId, Context.ConnectionId);
+                //}
 
                 //update hubgroups
                 var conversationList = await _conversationsController.GetAllConversationsForUser(currentUser.UserId);
