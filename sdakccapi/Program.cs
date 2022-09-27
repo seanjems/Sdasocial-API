@@ -10,9 +10,10 @@ using sdakccapi.Infrastructure;
 using sdakccapi.Models.Entities;
 using System.Configuration;
 using System.Text;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
-
+var currentPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
 // Add services to the container.
 //private const string _defaultCorsPolicyName = "localhost";
 
@@ -22,6 +23,13 @@ builder.Services.AddSingleton<Dictionary<string, UserConnectionDto>>(opts => new
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 //builder.Services.AddSwaggerGen();
+
+
+var _logger = new LoggerConfiguration()
+    .WriteTo.File($"{currentPath.Replace("sdakccapi.dll","")}\\Logs\\Logs.txt", rollingInterval: RollingInterval.Day)
+    .MinimumLevel.Information()
+    .CreateLogger();
+builder.Logging.AddSerilog(_logger);
 builder.Services.AddSwaggerGen(setup =>
 {
     // Include 'SecurityScheme' to use JWT Authentication

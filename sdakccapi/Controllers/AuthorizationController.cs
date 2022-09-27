@@ -305,7 +305,7 @@ namespace sdakccapi.Controllers
                 {
                     string uploadPath = Path.Combine(webRootPath, @"\media\images".TrimStart('\\')); // doesnt work if second path has a trailling slash
                     string extension = Path.GetExtension(files.FileName);
-                    if (!(extension.ToLower() == ".jpg" || extension.ToLower() == ".png"))
+                    if (!(extension.ToLower() == ".jpg" || extension.ToLower() == ".png" || extension.ToLower() == ".jpeg"))
                     {
                         throw new ApplicationException("The image file type must be jpg or png");
 
