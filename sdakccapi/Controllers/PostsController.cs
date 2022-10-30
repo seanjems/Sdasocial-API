@@ -38,18 +38,20 @@ namespace sdakccapi.Controllers
 
         // GET: api/Posts
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<CreatedPostOutDto>>> Getposts(int page =1, string? userProfileId=null, string? userName=null)
         {
             if (_context.posts == null)
             {
                 return NotFound();
             }
+         
             //if(string.IsNullOrEmpty(userProfileId) && string.IsNullOrEmpty(userName))
             //{
             //    ModelState.AddModelError("", "Both Username and UserId cannot be Empty");
             //    return BadRequest(ModelState);
             //}
-               
+
             int numberPerpage = 15;
             //if on timeline
             List<Posts> posts;

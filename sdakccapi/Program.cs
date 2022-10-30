@@ -11,6 +11,7 @@ using sdakccapi.Models.Entities;
 using System.Configuration;
 using System.Text;
 using Serilog;
+using sdakccapi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var currentPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
@@ -89,6 +90,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>
             .AddEntityFrameworkStores<sdakccapiDbContext>()
             .AddDefaultTokenProviders();
 
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddAuthentication(options =>
 {
