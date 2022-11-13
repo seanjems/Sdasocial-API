@@ -45,7 +45,7 @@ namespace sdakccapi.Controllers.SmtpClient
             emailDto.emailSenderAccount = emailSenderCredentials?["emailSenderAccount"].ToString();
             emailDto.emailSenderSecret = emailSenderCredentials?["emailSenderSecret"].ToString();
             emailDto.CompanyName = emailSenderCredentials?["CompanyName"].ToString();
-            emailDto.ReplyToEmail = emailSenderCredentials?["ReplyToEmail"].ToString();
+            //emailDto.ReplyToEmail = emailSenderCredentials?["ReplyToEmail"].ToString();
             emailDto.websiteLink = requestUrl.ToString();
             emailDto.ToEmail = emailSenderCredentials?["ToEmail"].ToString();
 

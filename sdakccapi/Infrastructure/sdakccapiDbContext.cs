@@ -17,7 +17,14 @@ namespace sdakccapi.Infrastructure
         public DbSet<Chats> chats { get; set; }
         public DbSet<Conversations> conversations { get; set; }
         public DbSet<ConversationMembers> conversationMembers { get; set; }
+        public DbSet<Category> categories { get; set; }
+        public DbSet<Customer> customers { get; set; }
         public DbSet<ActiveUsers> activeUsers { get; set; }
+        public DbSet<OrderDetail> orderDetails { get; set; }
+        public DbSet<Orders> orders { get; set; }
+        public DbSet<PaymentMode> paymentModes { get; set; }
+        public DbSet<Payments> payments { get; set; }
+        public DbSet<Product> products { get; set; }
 
 
 

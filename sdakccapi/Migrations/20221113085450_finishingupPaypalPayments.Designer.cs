@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using sdakccapi.Infrastructure;
 
@@ -11,9 +12,10 @@ using sdakccapi.Infrastructure;
 namespace sdakccapi.Migrations
 {
     [DbContext(typeof(sdakccapiDbContext))]
-    partial class sdakccapiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221113085450_finishingupPaypalPayments")]
+    partial class finishingupPaypalPayments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -299,9 +301,10 @@ namespace sdakccapi.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Slug")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("Sorting")
+                    b.Property<int>("Sorting")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -433,37 +436,44 @@ namespace sdakccapi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("CustomerID"), 1L, 1);
 
-                    b.Property<Guid?>("AccountNumber")
+                    b.Property<Guid>("AccountNumber")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<long?>("AddressID")
+                    b.Property<long>("AddressID")
                         .HasColumnType("bigint");
 
                     b.Property<string>("CardNumber")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Company")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Contact")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CountryCode")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FullName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("VatNumber")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("creditLimit")
+                    b.Property<decimal>("creditLimit")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<bool?>("deleted")
+                    b.Property<bool>("deleted")
                         .HasColumnType("bit");
 
                     b.HasKey("CustomerID");
@@ -525,52 +535,53 @@ namespace sdakccapi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("detailID"), 1L, 1);
 
-                    b.Property<decimal?>("costExc")
+                    b.Property<decimal>("costExc")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal?>("costInc")
+                    b.Property<decimal>("costInc")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("discountID")
+                    b.Property<int>("discountID")
                         .HasColumnType("int");
 
-                    b.Property<decimal?>("discountPercent")
+                    b.Property<decimal>("discountPercent")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<long?>("orderId")
+                    b.Property<long>("orderId")
                         .HasColumnType("bigint");
 
-                    b.Property<decimal?>("priceExc")
+                    b.Property<decimal>("priceExc")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal?>("priceInc")
+                    b.Property<decimal>("priceInc")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<long?>("productID")
+                    b.Property<long>("productID")
                         .HasColumnType("bigint");
 
                     b.Property<string>("productSlug")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("qty")
+                    b.Property<decimal>("qty")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("sortOrder")
+                    b.Property<int>("sortOrder")
                         .HasColumnType("int");
 
-                    b.Property<bool?>("specialPricingUsed")
+                    b.Property<bool>("specialPricingUsed")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("taxID")
+                    b.Property<int>("taxID")
                         .HasColumnType("int");
 
-                    b.Property<decimal?>("taxPercent")
+                    b.Property<decimal>("taxPercent")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal?>("totalPriceExc")
+                    b.Property<decimal>("totalPriceExc")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal?>("totalPriceInc")
+                    b.Property<decimal>("totalPriceInc")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("detailID");
@@ -586,37 +597,38 @@ namespace sdakccapi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
-                    b.Property<DateTime?>("CreatedDate")
+                    b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal?>("change")
+                    b.Property<decimal>("change")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<long?>("customerId")
+                    b.Property<long>("customerId")
                         .HasColumnType("bigint");
 
-                    b.Property<Guid?>("orderCode")
+                    b.Property<Guid>("orderCode")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int?>("orderStatus")
+                    b.Property<int>("orderStatus")
                         .HasColumnType("int");
 
-                    b.Property<int?>("quotationID")
+                    b.Property<int>("quotationID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("saleAgentId")
+                    b.Property<int>("saleAgentId")
                         .HasColumnType("int");
 
-                    b.Property<decimal?>("saleTotal")
+                    b.Property<decimal>("saleTotal")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("shiftId")
+                    b.Property<int>("shiftId")
                         .HasColumnType("int");
 
                     b.Property<string>("transactionComment")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("transactionStatus")
+                    b.Property<int>("transactionStatus")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
