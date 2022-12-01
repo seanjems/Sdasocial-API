@@ -10,6 +10,8 @@ namespace sdakccapi.Dtos.Users
         public string LastName { get; set; }
         public string UserId { get; set; }
         public long? TenantId { get; set; }
+        public string? Role { get; set; }
+        public string? Package { get; set; }
 
         public UserClaimsDto()
         {
@@ -22,6 +24,8 @@ namespace sdakccapi.Dtos.Users
             LastName = user?.Lastname;
             UserId = user?.Id;
             FullName = $"{user?.FirstName} {user?.Lastname}";
+            Package = user?.Package;
+            Role = user?.Role;
         }
 
     }

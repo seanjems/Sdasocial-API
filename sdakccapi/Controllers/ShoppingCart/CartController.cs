@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Authorization;
 using sdakccapi.Models.Entities;
 using sdakccapi.Dtos.Cart;
 using sdakccapi.StaticDetails;
+using Microsoft.AspNetCore.Identity;
+using sdakccapi.Controllers;
+using sdakccapi.Dtos.Users;
 
 namespace BillTrickOnline.Controllers
 {
@@ -21,15 +24,22 @@ namespace BillTrickOnline.Controllers
     public class CartController : Controller
     {
         private readonly sdakccapiDbContext context;
-        public CartController(sdakccapiDbContext context)
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly AuthorizationController _authorizationController;
+
+        public CartController(sdakccapiDbContext context, UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, AuthorizationController authorizationController)
         {
             this.context = context;
+            _roleManager = roleManager;
+            _userManager = userManager;
+            _authorizationController = authorizationController;
         }
 
         //POST paypal details after payment
         [HttpPost]
         [AllowAnonymous]
-        public IActionResult AfterPayPalPayment(OffertoryCartDto offertoryCartDto)
+        public async Task<IActionResult> AfterPayPalPayment(OffertoryCartDto offertoryCartDto)
         {
 
 
@@ -49,8 +59,9 @@ namespace BillTrickOnline.Controllers
 
                         using (var scope = context.Database.BeginTransaction())
                         {
-                            
+
                             //create customer
+                            
                             Customer customer = new Customer()
                             {
                                 CountryCode = (payPalObj?["payer"]?["address"]?["country_code"]?.ToString()),
@@ -62,12 +73,47 @@ namespace BillTrickOnline.Controllers
                             {
                                 context.customers.Add(customer);
                                 context.SaveChanges();
+                               
                             }
                             else
                             {
                                 customer = objFromDB;
                             }
-                            
+
+                            //create customer as user
+                            AppUser systemUser = await _userManager.FindByEmailAsync(customer.Email);
+
+                            if (systemUser == null)
+                            {
+                                systemUser = new AppUser()
+                                {
+                                    Email = customer.Email,
+                                    FirstName = (bool)customer?.FullName.Contains(" ") ? customer?.FullName?.Substring(0, customer.FullName.IndexOf(" ") + 1) : customer.FullName,
+                                    Lastname = (bool)customer?.FullName.Contains(" ") ? customer?.FullName?.Substring(customer.FullName.IndexOf(" ")) : "",
+                                    UserName = customer.FullName.ToLower().Replace(" ", "")
+
+                                };
+                                
+                                var result = await _userManager.CreateAsync(systemUser);
+                                if (result.Succeeded)
+                                {
+                                    //send pass word generation email
+                                }
+                                else if (result.Errors.FirstOrDefault()?.Code == "DuplicateUserName")
+                                {
+                                    // username exists auto generate new              
+                                    systemUser.UserName = await _authorizationController.GenerateUserName(systemUser.UserName);
+
+                                    //try again creating once
+                                    result = await _userManager.CreateAsync(systemUser);
+                                    if (result.Succeeded)
+                                    {
+                                       //send password generation email
+                                    }
+
+                                }
+                            }
+
 
                             //create order
                             List<CartDetail> cart = offertoryCartDto.items ?? new List<CartDetail>();
@@ -102,7 +148,16 @@ namespace BillTrickOnline.Controllers
                                 };
                                 sortOrder++;
                                 context.orderDetails.Add(orderDetail);
-                                //no need to save changes immediately
+                                
+                                //create user role for claims for the lugogo ambasodors show
+
+                                if(orderDetail.productSlug=="lugogo" || orderDetail.productSlug == "imperial")
+                                {
+                                    var check = await _roleManager.FindByNameAsync(orderDetail.productSlug);
+                                    var role = await _userManager.AddToRoleAsync(systemUser, orderDetail.productSlug);
+                                }
+
+
                             }
 
                             //create payment
@@ -124,6 +179,7 @@ namespace BillTrickOnline.Controllers
                                 SupplierID = -1,
                                 SupplierPaymentID = -1
                             };
+
 
                             context.payments.Add(payments);
                             context.SaveChanges();

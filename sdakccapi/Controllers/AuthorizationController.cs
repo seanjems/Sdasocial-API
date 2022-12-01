@@ -44,7 +44,7 @@ namespace sdakccapi.Controllers
             var user = await Authenticate(userLogin);
             if (user != null)
             {
-                var token = GenerateToken(user);
+                var token = await GenerateToken(user);
                 return Ok(new { UserToken = token });
             }
             return NotFound("Invalid username or password");
@@ -233,7 +233,8 @@ namespace sdakccapi.Controllers
             return Ok(userProfile);
         }
 
-        private async Task<string> GenerateUserName(string oldUserName)
+        [NonAction]
+        public async Task<string> GenerateUserName(string oldUserName)
         {
             int random = 1;
             string newUsername = oldUserName + random.ToString();
@@ -251,14 +252,19 @@ namespace sdakccapi.Controllers
             return newUsername;
         }
 
-        private string GenerateToken(AppUser user)
+        private async Task<string> GenerateToken(AppUser user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
+            var package = await _userManager.GetRolesAsync(user);
+
+            //change here
+            string packageValue = package?.FirstOrDefault(x => x == "imperial");
             var claims = new[]
             {
-                new Claim("user", JsonConvert.SerializeObject(new UserClaimsDto(user)))
+                new Claim("user", JsonConvert.SerializeObject(new UserClaimsDto(user))),
+                new Claim("Package", packageValue)
 ,
             };
 

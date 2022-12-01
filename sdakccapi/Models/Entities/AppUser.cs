@@ -29,6 +29,10 @@ namespace sdakccapi.Models.Entities
         [Required]
         public DateTime CreatedTime { get; set; }
         public DateTime DateModified { get; set; }
+        [NotMapped]
+        public string Role { get; set; }
+        [NotMapped]
+        public string Package { get; set; }
 
         [NotMapped]
         public virtual IEnumerable<AppUser> Followers { get;  set; }
