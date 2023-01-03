@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using sdakccapi.Dtos.Cart;
+using System.ComponentModel.DataAnnotations;
 
 namespace sdakccapi.Dtos.Users
 {
@@ -15,5 +16,7 @@ namespace sdakccapi.Dtos.Users
         public string Name { get; set; }
         [Required, MinLength(3), MaxLength(15)]
         public string Surname { get; set; }
+        public List<CartDetail>? items { get; set; }
+        public string? orderCurrency { get; set; }
     }
 }

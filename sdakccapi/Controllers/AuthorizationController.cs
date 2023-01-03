@@ -4,10 +4,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using sdakccapi.Controllers.SmtpClient;
 using sdakccapi.Dtos;
+using sdakccapi.Dtos.EmailDto;
 using sdakccapi.Dtos.Users;
 using sdakccapi.Infrastructure;
 using sdakccapi.Models.Entities;
@@ -26,15 +29,17 @@ namespace sdakccapi.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly sdakccapiDbContext _context;
+        private readonly SmtpSenderController _emailSmtpController;
 
 
-        public AuthorizationController(IConfiguration config,sdakccapiDbContext context, SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, IWebHostEnvironment webHostEnvironment)
+        public AuthorizationController(IConfiguration config,sdakccapiDbContext context, SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, IWebHostEnvironment webHostEnvironment, SmtpSenderController emailSmtpController)
         {
             _config = config;
             _signInManager = signInManager;
             _userManager = userManager;
             _webHostEnvironment = webHostEnvironment;
             _context = context;
+            _emailSmtpController = emailSmtpController;
         }
 
         [AllowAnonymous]
@@ -44,7 +49,16 @@ namespace sdakccapi.Controllers
             var user = await Authenticate(userLogin);
             if (user != null)
             {
+                
+
                 var token = await GenerateToken(user);
+
+                var emailDto = new EmailDto(true);
+                emailDto.Subject = "A new Login has been detected";
+                emailDto.ToEmail = user.Email;
+                emailDto.Body = $"A new login into your account with SDA Kampala central has been detetected at {DateTime.UtcNow}UTC. If this wasn't you, You can take some steps to secure your account such as changing your account password with us or contacting us for help. <br/><br/>If this was you, then you can Ignore this message.<br/><br/>https://social.kampalacentraladventist.org";
+
+                _emailSmtpController.SendMail(emailDto);
                 return Ok(new { UserToken = token });
             }
             return NotFound("Invalid username or password");
@@ -86,7 +100,61 @@ namespace sdakccapi.Controllers
             }
             return BadRequest(result.Errors);
         }
-       // [Authorize]
+
+        [AllowAnonymous]
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            if (string.IsNullOrEmpty(resetPasswordDto.OldPassword) && string.IsNullOrEmpty(resetPasswordDto.ResetToken))
+            {
+                ModelState.AddModelError("", "TokenContext and old password cannot all be null");
+                return BadRequest(ModelState);  
+            }
+            var user = await _userManager.FindByEmailAsync(resetPasswordDto.EmailAddress);
+            if(user == null) return NotFound("User doesnot exist");
+            if (resetPasswordDto?.OldPassword is not null)
+            {
+                
+                var result = await _userManager.ChangePasswordAsync(user, resetPasswordDto.OldPassword, resetPasswordDto.Password);
+
+                if (result.Succeeded)
+                {
+                    return Ok("Password Changed Successfully");
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError("", error.Description);                        
+                    }
+                    return BadRequest(ModelState);
+                }
+            }
+            else
+            {
+                var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(resetPasswordDto.ResetToken));
+
+                
+                var result = await _userManager.ResetPasswordAsync(user,code,resetPasswordDto.Password);
+
+                if (result.Succeeded)
+                {
+                    return Ok("Password Changed Successfully");
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError("", error.Description);
+                    }
+                    return BadRequest(ModelState);
+                }
+            }
+           
+        }
+        // [Authorize]
         [NonAction]
         public UserClaimsDto GetCurrentUser(HttpContext httpContext)
         {
@@ -260,7 +328,7 @@ namespace sdakccapi.Controllers
             var package = await _userManager.GetRolesAsync(user);
 
             //change here
-            string packageValue = package?.FirstOrDefault(x => x == "imperial");
+            string packageValue = package?.FirstOrDefault(x => x == "lugogo")??"";
             var claims = new[]
             {
                 new Claim("user", JsonConvert.SerializeObject(new UserClaimsDto(user))),

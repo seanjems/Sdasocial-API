@@ -1,4 +1,5 @@
-﻿using System;
+﻿using sdakccapi.Dtos.MtnMomoDto;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,7 +19,8 @@ namespace sdakccapi.StaticDetails
             Card=3,
             Bankdeposit=4,
             Cheque=5,
-            Paypal=6
+            Paypal=6,
+            MobileMoney=7
         }
        
         public enum SaleStatus
@@ -36,5 +38,8 @@ namespace sdakccapi.StaticDetails
             ClosedFromQuote = 3 + 10,
 
         }
+        #region MtnMomoStatics
+        public static MtnTokenObj MtnTokenObj;
+        #endregion
     }
 }
